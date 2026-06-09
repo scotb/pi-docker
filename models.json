@@ -1,0 +1,23 @@
+{
+  "providers": {
+    "llama-swap": {
+      "baseUrl": "http://host.docker.internal:8007/v1",
+      "api": "openai-completions",
+      "apiKey": "none",
+      "models": [
+        {
+          "id": "gemma4-12B-it-Q8",
+          "name": "gemma4-12B-it-Q8"
+        },
+        {
+          "id": "qwen25-14b-coder",
+          "name": "qwen25-14b-coder"
+        },
+        {
+          "id": "qwen36-35B-A3B-UD-IQ4",
+          "name": "qwen36-35B-A3B-UD-IQ4"
+        }
+      ]
+    }
+  }
+}
