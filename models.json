@@ -6,16 +6,20 @@
       "apiKey": "none",
       "models": [
         {
-          "id": "gemma4-12B-it-Q8",
-          "name": "gemma4-12B-it-Q8"
+          "id": "coder (ornith)",
+          "name": "coder"
         },
         {
-          "id": "qwen25-14b-coder",
-          "name": "qwen25-14b-coder"
+          "id": "architect",
+          "name": "architect"
         },
         {
-          "id": "qwen36-35B-A3B-UD-IQ4",
-          "name": "qwen36-35B-A3B-UD-IQ4"
+          "id": "reviewer",
+          "name": "reviewer"
+        },
+        {
+          "id": "researcher",
+          "name": "researcher"
         }
       ]
     }
