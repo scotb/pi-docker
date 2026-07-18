@@ -41,6 +41,15 @@ pi /login
 pi --list-models
 ```
 
+## Extensions
+
+### pi-personas (bundled)
+Switch between lead, coder, reviewer, and architect personas mid-session. Each persona defines a distinct identity with tailored tools, models, and instructions — enabling a natural development pipeline (investigate → implement → review → finalize).
+
+This extension is bundled with the image and auto-installed at container startup. No separate install step is needed.
+
+See [pi-personas/README.md](./pi-personas/README.md) for full documentation.
+
 ## What's inside
 - **Base**: `mcr.microsoft.com/dotnet/sdk:10.0-noble` (Ubuntu 24.04 based)
 - **Node.js 22** (installed via nodesource)

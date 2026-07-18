@@ -1,0 +1,30 @@
+{
+  "name": "pi-personas",
+  "version": "1.0.0",
+  "description": "Persona switching for Pi — switch between lead, coder, reviewer, and architect mid-session",
+  "type": "module",
+  "main": "pi-personas/index.ts",
+  "exports": {
+    ".": "./pi-personas/index.ts"
+  },
+  "pi": {
+    "extensions": ["./pi-personas/index.ts"]
+  },
+  "scripts": {
+    "build": "tsc --noEmit"
+  },
+  "keywords": [
+    "pi",
+    "persona",
+    "extension",
+    "coding-agent"
+  ],
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": ">=0.74.0"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": ">=0.74.0",
+    "typescript": "^5.6.0"
+  }
+}
+

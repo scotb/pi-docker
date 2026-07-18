@@ -20,4 +20,9 @@ ENV PATH="/home/ubuntu/.pi/bin:${PATH}"
 USER ubuntu
 WORKDIR /workspace
 
-ENTRYPOINT ["pi"]
+# Copy bundled extensions and startup script outside of ~/.pi/ so they survive
+# the host volume mount (the host mount overwrites ~/.pi/ at runtime).
+COPY --chown=ubuntu:ubuntu entrypoint.sh /home/ubuntu/entrypoint.sh
+COPY --chown=ubuntu:ubuntu pi-personas /opt/pi-extensions/pi-personas
+
+ENTRYPOINT ["/home/ubuntu/entrypoint.sh"]
