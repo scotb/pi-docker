@@ -18,7 +18,7 @@ Four personas ship with the package out of the box:
 
 | Persona | Model | Tools | Purpose |
 |---------|-------|-------|---------|
-| `lead` | llama-swap/lead | read, bash, grep, find, ls, write(.md) | Orchestrator. Investigates with user, writes specs/docs, final review. |
+| `lead` | llama-swap/lead | read, bash, grep, find, ls, edit, write | Orchestrator. Investigates with user, writes specs/docs, final review. |
 | `coder` | llama-swap/coder | read, bash, edit, write | Implementation & bug fixes. Full file access. |
 | `reviewer` | llama-swap/reviewer | read, bash, grep, find, ls | Code review. Read-only — never modifies files. |
 | `architect` | llama-swap/architect | read, bash, grep, find, ls | System design & trade-off analysis. Read-only. |
@@ -62,8 +62,8 @@ Personas are configured in JSON files, merged in this order (later overrides ear
   "lead": {
     "model": "llama-swap/lead",
     "thinkingLevel": "high",
-    "tools": ["read", "bash", "grep", "find", "ls", "write"],
-    "instructions": "You are the LEAD. Investigate with the user, plan solutions, write specs. Can write .md files but never code."
+    "tools": ["read", "bash", "grep", "find", "ls", "edit", "write"],
+    "instructions": "You are the LEAD. Investigate with the user, plan solutions, write specs. Can write .md, .txt, config files (.json, .yaml, .yml, .toml, .ini, .env), shell scripts (.sh), Dockerfiles, CI/CD configs, and other documentation — but never source code."
   },
   "coder": {
     "model": "llama-swap/coder",

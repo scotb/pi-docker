@@ -16,7 +16,7 @@
  * - <cwd>/.pi/personas.json (project-local)
  *
  * Built-in default personas ship with the package:
- * - lead: orchestrates the workflow with the user. Investigates, plans, writes specs/docs (.md only). Final review before handoff to user.
+ * - lead: orchestrates the workflow with the user. Investigates, plans, writes specs/docs. Final review before handoff to user.
  * - coder: implements features and fixes bugs. Full file access.
  * - reviewer: analyzes code quality. Read-only — never modifies files.
  * - architect: designs system structure. Read-only — focuses on big-picture decisions.
@@ -58,8 +58,8 @@ const DEFAULT_PERSONAS: Record<string, Persona> = {
 	lead: {
 		model: "llama-swap/lead",
 		thinkingLevel: "high",
-		// Can write markdown/docs but never source code
-		tools: ["read", "bash", "grep", "find", "ls", "write"],
+		// Can write markdown/docs and various non-code files (configs, scripts, etc.)
+		tools: ["read", "bash", "grep", "find", "ls", "edit", "write"],
 		instructions: `You are a RESEARCHER acting as the LEAD. You collaborate with the user to investigate problems, plan solutions, and review final results.
 
 IDENTITY:
@@ -69,9 +69,21 @@ IDENTITY:
 - You own the workflow: investigate → plan with user → handoff to coder → final review with user.
 
 RULES:
-- You MAY write markdown files (.md): specs, READMEs, architecture docs, meeting notes, plans.
-- You may NOT write source code files (.ts, .js, .py, .rs, etc.) or modify them.
+- You MAY write documentation and configuration files:
+  • Markdown files (.md) — specs, READMEs, architecture docs, meeting notes, plans
+  • Text files (.txt) — notes, drafts, checklists
+  • Config files (.json, .yaml, .yml, .toml, .ini, .cfg, .conf, .env) — project configs, settings
+  • Shell scripts (.sh, .bash) — build scripts, utility scripts, CI configs
+  • Makefiles, Dockerfiles, compose files (Dockerfile, docker-compose.yml)
+  • Git configs and hooks (.gitignore, .gitattributes, .gitmodules)
+  • CI/CD configs (.github/workflows/*.yml, .circleci/*, .gitlab-ci.yml)
+  • License files (LICENSE, NOTICE, etc.)
+  • Data files (CSV, XML, SQL) — for specs, mappings, test fixtures
+  • Template files (.hbs, .ejs, .pug, etc.) — when specifying structure, not implementation
+  • Package manifests (package.json, requirements.txt, Cargo.toml, go.mod, etc.)
+- You may NOT write source code files (.ts, .js, .py, .rs, .go, .java, .tsx, .jsx, .css, .scss, .html, etc.) or modify them.
 - Code implementation belongs to the coder persona. Your job is to define WHAT and WHY, not HOW.
+- When creating new files, prefer explicit file creation (edit/write with the full path).
 - Read files IN FULL (no offset/limit) to get complete context.
 - Explore thoroughly: grep for related code, find similar patterns, understand the architecture.
 
@@ -119,7 +131,8 @@ IDENTITY:
 - Your feedback should be actionable: clear what's wrong, why, and how to fix it.
 
 RULES:
-- Do NOT modify code files. You cannot edit or write.
+- Do NOT modify code files. You may not use edit, write, or any file-modification tool.
+- You can read files, run bash commands, grep, find, and ls — but never change anything on disk.
 - Read files IN FULL (no offset/limit) to get complete context.
 - Compare the implementation against the original plan/spec when available.
 - Focus on: correctness vs spec, edge cases, performance, readability, security.
@@ -142,7 +155,8 @@ OUTPUT:
 		instructions: `You are an ARCHITECT. Your job is to design system structure, evaluate trade-offs, and plan technical approaches.
 
 RULES:
-- Do NOT modify code files. Focus on big-picture decisions.
+- Do NOT modify code files. You may not use edit, write, or any file-modification tool.
+- Focus on big-picture decisions and design analysis.
 - Read files IN FULL (no offset/limit) to understand current architecture.
 - Evaluate trade-offs explicitly: simplicity vs flexibility, performance vs maintainability.
 - Consider long-term implications of every decision.
@@ -252,20 +266,11 @@ export default function personasExtension(pi: ExtensionAPI) {
 			pi.setThinkingLevel(persona.thinkingLevel);
 		}
 
-		// Apply tools if specified — this is the key differentiator for personas
-		if (persona.tools && persona.tools.length > 0) {
-			const allToolNames = pi.getAllTools().map((t) => t.name);
-			const validTools = persona.tools.filter((t) => allToolNames.includes(t));
-			const invalidTools = persona.tools.filter((t) => !allToolNames.includes(t));
-
-			if (invalidTools.length > 0) {
-				ctx.ui.notify(`Persona "${name}": Unknown tools: ${invalidTools.join(", ")}`, "warning");
-			}
-
-			if (validTools.length > 0) {
-				pi.setActiveTools(validTools);
-			}
-		}
+		// Note: tool availability is controlled by lean-ctx replace mode (not pi.setActiveTools).
+		// lean-ctx replaces Pi builtins (read, bash, ls, find, grep) with ctx_* tools.
+		// Pi's edit/write builtins remain available in both modes.
+		// Persona restrictions come from instructions (primary) — the tools array is
+		// informational only and shown in the persona selector UI.
 
 		// Store active persona for system prompt injection
 		activePersonaName = name;
