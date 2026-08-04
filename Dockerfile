@@ -16,7 +16,8 @@ RUN npm install -g --min-release-age=0 @earendil-works/pi-coding-agent
 ENV PATH="/home/ubuntu/.pi/bin:${PATH}"
 
 # The base image ships with an 'ubuntu' user at UID 1000 that we keep.
-# Its home directory is /home/ubuntu, matching the pi.sh mount path.
+# Its home directory is /home/ubuntu, matching the pi.sh mount path for
+# ~/.pi.  WORKDIR is overridden at runtime by pi.sh to the project path.
 USER ubuntu
 WORKDIR /workspace
 

@@ -28,8 +28,12 @@ ln -s "$(pwd)/pi.sh" ~/bin/pi
 cd /path/to/your/project
 pi
 ```
-Starts an interactive pi session with the cur dir mounted at `/workspace`. To get a bash shell inside the container instead, run:
-`docker run -it --rm -v "$HOME/.pi:/home/ubuntu/.pi" -v "$(pwd):/workspace" -w /workspace --entrypoint bash pi-portable`
+Starts an interactive pi session with the current directory mounted at its original path (prefixed with `/host`) inside the container. Each project gets its own identity: separate session history, trust decisions, and settings.
+
+To get a bash shell inside the container instead, run:
+```bash
+docker run -it --rm -v "$HOME/.pi:/home/ubuntu/.pi" -v "$(pwd):/host/$(pwd)" -w "/host/$(pwd)" --entrypoint bash pi-portable
+```
 
 ### Run Pi directly
 ```bash
@@ -61,7 +65,7 @@ See [pi-personas/README.md](./pi-personas/README.md) for full documentation.
 
 ## Volume mounts
 | Host path | Container path | Purpose |
-| `.` (cur dir) | `/workspace` | Project files |
+| `.` (cur dir) | `/host/.` (identity) | Project files — one identity per project |
 | `~/.pi` | `/home/ubuntu/.pi` | Pi config (sessions, settings, extensions, and **core binaries**) |
 
 ## cfg
