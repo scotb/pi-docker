@@ -22,6 +22,7 @@ Four personas ship with the package out of the box:
 | `coder` | llama-swap/coder | read, bash, edit, write | Implementation & bug fixes. Full file access. |
 | `reviewer` | llama-swap/reviewer | read, bash, grep, find, ls | Code review. Read-only — never modifies files. |
 | `architect` | llama-swap/architect | read, bash, grep, find, ls | System design & trade-off analysis. Read-only. |
+| `researcher` | llama-swap/researcher | read, bash, grep, find, ls, write | Generalist investigator. Open-ended research on any topic. |
 
 ### Usage
 
@@ -82,6 +83,12 @@ Personas are configured in JSON files, merged in this order (later overrides ear
     "thinkingLevel": "high",
     "tools": ["read", "bash", "grep", "find", "ls"],
     "instructions": "You are an ARCHITECT. Design system structure and evaluate trade-offs. Focus on big-picture decisions."
+  },
+  "researcher": {
+    "model": "llama-swap/researcher",
+    "thinkingLevel": "high",
+    "tools": ["read", "bash", "grep", "find", "ls", "write"],
+    "instructions": "You are a RESEARCHER. Investigate, analyze, and document findings on any topic the user brings to you."
   }
 }
 ```
