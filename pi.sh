@@ -4,7 +4,7 @@ set -euo pipefail
 # Run the container with the given command
 docker run -it --rm \
         -v "$HOME/.pi:/home/ubuntu/.pi" \
-        -v "$(pwd):/workspace" \
+        -v "$(pwd):$(pwd)" \
         -e "LLAMA_SERVER_URL=http://host.docker.internal:8007" \
-        -w /workspace \
+        -w "$(pwd)" \
         pi-portable "$@"

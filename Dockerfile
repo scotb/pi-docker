@@ -18,7 +18,7 @@ ENV PATH="/home/ubuntu/.pi/bin:${PATH}"
 # The base image ships with an 'ubuntu' user at UID 1000 that we keep.
 # Its home directory is /home/ubuntu, matching the pi.sh mount path.
 USER ubuntu
-WORKDIR /workspace
+WORKDIR $HOME
 
 # Copy bundled extensions and startup script outside of ~/.pi/ so they survive
 # the host volume mount (the host mount overwrites ~/.pi/ at runtime).
