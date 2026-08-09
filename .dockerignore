@@ -1,0 +1,31 @@
+# Exclude unnecessary files from the Docker build context.
+# The build stage clones the Pi repo fresh via git, so we don't need
+# anything from the host's copy of the repo.
+
+# Git, IDE, and editor artifacts
+.git
+.gitignore
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Node.js
+node_modules
+npm-debug.log*
+
+# Docker
+docker-compose*.yml
+Dockerfile
+*.md
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Scratch / workspace
+.scratch
+
+# Pi sub-agents runtime data
+.pi-subagents
