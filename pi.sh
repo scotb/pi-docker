@@ -37,4 +37,4 @@ docker run -it --rm \
         -v "$project:/host$project" \
         -e "LLAMA_SERVER_URL=http://host.docker.internal:8007" \
         -w "/host$project" \
-        pi-portable "$@"
+        pi-sandbox:latest "$@"
