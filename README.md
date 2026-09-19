@@ -27,8 +27,24 @@ docker build \
 |---|---|---|
 | `FORK_URL` | `https://github.com/earendil-works/pi` | Git URL for the Pi monorepo |
 | `FORK_HASH` | _(empty)_ | Full 40-char commit hash. Omit to use the branch's current HEAD. |
+| `GIT_USER_NAME` | _(empty)_ | Local-only git identity (author name) for commits made inside the container |
+| `GIT_USER_EMAIL` | _(empty)_ | Local-only git identity (author email) for commits made inside the container |
 
 > **Recommended workflow:** Build once per week, tag the image with the date, and pin to the commit hash. Roll back by running a previous tag.
+
+### Local git identity (optional)
+
+If you want commits made inside the container attributed to you, pass your
+name and email as build args. Only the author identity is written (to
+`/home/ubuntu/.gitconfig`) — **no credentials** are stored in the image;
+push/pull are done manually on the host.
+
+```bash
+docker build \
+  --build-arg GIT_USER_NAME="Your Name" \
+  --build-arg GIT_USER_EMAIL="you@example.com" \
+  -t pi-sandbox .
+```
 
 ## Weekly Build Workflow
 
@@ -42,14 +58,17 @@ echo "Building against: $COMMIT"
 
 # 3. Build and tag
 docker build \
-  --build-arg FORK_URL=https://github.com/earendil-works/pi \
+  --build-arg FORK_URL=https://github.com/scotb/pi \
   --build-arg FORK_HASH="$COMMIT" \
+  --build-arg GIT_USER_NAME="Your Name" \
+  --build-arg GIT_USER_EMAIL="you@example.com" \
   -t pi-sandbox:latest \
   -t pi-sandbox:$(date +%F) \
   .
 
 # 4. If something breaks, roll back to last week's image
 docker run -it --rm pi-sandbox:$(date -d '7 days ago' +%F)
+```
 
 ## Image Tagging
 
@@ -238,8 +257,18 @@ See [pi-personas/README.md](./pi-personas/README.md) for full documentation.
 | `procps` | `ps`, `top`, `free`, `vmstat` |
 | `openssh-client` | SSH access |
 
+### Browser
+- **Chromium** (Playwright-managed, at `/opt/playwright-browsers`) — headless browser for visual page inspection. Ubuntu 24.04's apt `chromium-browser` is a snap stub that won't run in Docker, so the image uses Playwright's standalone Chromium build instead.
+- **playwright** 1.63 (npm, global; resolvable via `require('playwright')` through `NODE_PATH`) for scripted automation.
+- **page-shot** (`/usr/local/bin/page-shot`) — renders a URL to a PNG for the agent to view with the built-in `read` tool:
+  ```sh
+  page-shot http://localhost:3000 /tmp/page.png [--full] [--viewport WxH] [--wait ms] [--selector css]
+  ```
+  Prints a JSON summary: `{ ok, out, url, status, title, consoleErrors, failedRequests }`.
+  Screenshots only reach the model when it is vision-capable ("input": ["text", "image"] in `models.json`).
+
 ### Pi
-- **Pi CLI**: standalone Bun-compiled binary at `/opt/pi/pi` (no Node.js runtime needed)
+- **Pi CLI**: built from source with plain `npm run build` (no Bun) and shipped to `/opt/pi/`; the entrypoint runs it as `node /opt/pi/packages/coding-agent/dist/cli.js`
 - **Agent Tools**: `lean-ctx` (provided via host `~/.pi/bin` mount)
 - **llama-swap**: NOT configured in the image — provided by the host-mounted `~/.pi/agent/models.json`
 
