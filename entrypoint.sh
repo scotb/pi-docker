@@ -13,4 +13,4 @@ if [ -d "$EXT_SRC" ] && [ ! -d "$EXT_DST" ]; then
     echo "pi-personas extension installed from image"
 fi
 
-exec pi "$@"
+exec node /opt/pi/packages/coding-agent/dist/cli.js "$@"
