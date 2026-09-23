@@ -154,7 +154,6 @@ RUN if [ -n "${GIT_USER_NAME}" ] && [ -n "${GIT_USER_EMAIL}" ]; then \
 # Copy bundled extensions and startup script outside of ~/.pi/ so they survive
 # the host volume mount (the host mount overwrites ~/.pi/ at runtime).
 COPY --chown=ubuntu:ubuntu entrypoint.sh /home/ubuntu/entrypoint.sh
-# COPY --chown=ubuntu:ubuntu pi-personas /opt/pi-extensions/pi-personas  # Removed - use extension on host instead of baking into image
 # self-compact extension (vendored fork — see self-compact-pi-agent/SYNC.md).
 COPY --chown=ubuntu:ubuntu self-compact-pi-agent/apps/self-compact /opt/pi-extensions/self-compact
 # Context thresholds for the self-compact extension, applied to every Pi process in the

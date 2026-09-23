@@ -496,44 +496,7 @@ Use scout to map the entry points in this project.
 
 ---
 
-## 9. Lead Persona Updates
-
-### Update lead persona instructions
-
-Add to your lead persona's instructions (in `pi-personas/index.ts` or via `~/.pi/agent/personas.json`):
-
-```markdown
-## Sub-Agents
-
-When a task benefits from specialized work, use the subagent tool to delegate:
-
-1. **Scout** for codebase exploration — "Use scout to [specific goal]"
-2. **Worker** for implementation — "Use worker to [approved plan]"
-3. **Reviewer** for quality checks — "Run a reviewer to check [specific concern]"
-4. **Oracle** for design decisions — "Ask oracle to review [decision] and challenge assumptions"
-
-### When to delegate:
-- Any task requiring deep codebase exploration (scout)
-- Implementation work that would bloat this session's context (worker)
-- Independent review of completed work (reviewer)
-- Design decisions needing a second opinion (oracle)
-
-### When NOT to delegate:
-- Simple, focused changes (do them yourself)
-- User-facing questions that need immediate answers
-- Work requiring full context of our ongoing conversation
-
-### Sub-agent safety:
-- Sub-agents run in fresh or forked context — they don't bloat this session
-- Use `context: "fresh"` for independent exploration
-- Use `context: "fork"` when the child needs reference to our conversation
-- Sub-agents can ask you questions via relay — respond to these when they appear
-- If a sub-agent seems stuck, you can steer, interrupt, or stop it
-```
-
----
-
-## 10. Testing Checklist
+## 9. Testing Checklist
 
 After installation, verify:
 
@@ -547,7 +510,7 @@ After installation, verify:
 
 ---
 
-## 11. Rollback
+## 10. Rollback
 
 If something goes wrong:
 
@@ -564,7 +527,7 @@ rm ~/.pi/agent/extensions/subagent/config.json
 # Restart Pi
 ```
 
-The personas extension and llama-swap configuration are unaffected.
+The llama-swap configuration is unaffected.
 
 ---
 

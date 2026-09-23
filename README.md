@@ -223,11 +223,16 @@ docker run -it --rm \
 
 ## Extensions
 
-### pi-personas (bundled)
+### self-compact (bundled)
 
-Switch between lead, coder, reviewer, and architect personas mid-session. Auto-installed at container startup.
+Automatic context management for long-running sessions: context bar in the footer
+(notice 50% / warning 70% / forced 85% of the active model's window), a mandatory
+`note_to_self` handoff, and a custom compaction summary that preserves goal, decisions,
+progress, and next action. Re-synced from the image into `~/.pi/agent/extensions/` at
+container startup.
 
-See [pi-personas/README.md](./pi-personas/README.md) for full documentation.
+Source: the `self-compact-pi-agent` fork (own git repo, pinned in its `SYNC.md` —
+not part of this repo's git). Details: `docs/adr/0001-self-compact-context-management.md`.
 
 ## Volume mounts
 
