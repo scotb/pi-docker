@@ -155,5 +155,13 @@ RUN if [ -n "${GIT_USER_NAME}" ] && [ -n "${GIT_USER_EMAIL}" ]; then \
 # the host volume mount (the host mount overwrites ~/.pi/ at runtime).
 COPY --chown=ubuntu:ubuntu entrypoint.sh /home/ubuntu/entrypoint.sh
 # COPY --chown=ubuntu:ubuntu pi-personas /opt/pi-extensions/pi-personas  # Removed - use extension on host instead of baking into image
+# self-compact extension (vendored fork — see self-compact-pi-agent/SYNC.md).
+COPY --chown=ubuntu:ubuntu self-compact-pi-agent/apps/self-compact /opt/pi-extensions/self-compact
+# Context thresholds for the self-compact extension, applied to every Pi process in the
+# container (parent sessions AND pi-subagents children). Precedence: --compact-* CLI flag > env > shipped default.
+# soft 50% / warning 70% / forced 85% (70% + 15% buffer) of the active model's context window.
+ENV SELF_COMPACT_SOFT_AT="50%" \
+    SELF_COMPACT_AT="70%" \
+    SELF_COMPACT_BUFFER="15%"
 
 ENTRYPOINT ["/home/ubuntu/entrypoint.sh"]
