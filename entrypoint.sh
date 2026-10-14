@@ -19,18 +19,23 @@ if [ -d "$SC_SRC" ]; then
     echo "self-compact extension installed from $SC_SRC"
 fi
 
-# pi-subagents: always re-sync from the fork — the fork is the source of truth for the
-# patched runner (self-compact drain-hold gate + child context-management tools).
+# pi-subagents: installed exactly like self-compact — from the live /host fork when
+# mounted (dev iteration), otherwise the image-baked copy. The /host fork is
+# source-only, so runtime deps come from the baked node_modules.
 PS_SRC="/host/data/apps/pi-docker/pi-subagents"
+PS_BAKED="/opt/pi-extensions/pi-subagents"
 if [ ! -d "$PS_SRC" ]; then
-    PS_SRC="/opt/pi-extensions/pi-subagents"
+    PS_SRC="$PS_BAKED"
 fi
-PS_DST="$HOME/.pi/agent/npm/node_modules/pi-subagents"
+PS_DST="$HOME/.pi/agent/extensions/pi-subagents"
 if [ -d "$PS_SRC" ]; then
     rm -rf "$PS_DST"
     cp -a "$PS_SRC" "$PS_DST"
-    rm -rf "$PS_DST/.git"
-    echo "pi-subagents synced from fork"
+    if [ ! -d "$PS_DST/node_modules" ] && [ -d "$PS_BAKED/node_modules" ]; then
+        cp -a "$PS_BAKED/node_modules" "$PS_DST/node_modules"
+    fi
+    rm -rf "$PS_DST/.git" "$PS_DST/node_modules/pi-subagents"
+    echo "pi-subagents installed from $PS_SRC"
 fi
 
 exec node /opt/pi/packages/coding-agent/dist/cli.js "$@"
