@@ -156,6 +156,10 @@ RUN if [ -n "${GIT_USER_NAME}" ] && [ -n "${GIT_USER_EMAIL}" ]; then \
 COPY --chown=ubuntu:ubuntu entrypoint.sh /home/ubuntu/entrypoint.sh
 # self-compact extension (vendored fork — see self-compact-pi-agent/SYNC.md).
 COPY --chown=ubuntu:ubuntu self-compact-pi-agent/apps/self-compact /opt/pi-extensions/self-compact
+# pi-subagents (vendored fork — patched runner with the self-compact drain-hold gate +
+# child context-management tools). The entrypoint re-syncs from
+# /host/data/apps/pi-docker/pi-subagents when the /host mount is present (dev iteration).
+COPY --chown=ubuntu:ubuntu pi-subagents /opt/pi-extensions/pi-subagents
 # Context thresholds for the self-compact extension, applied to every Pi process in the
 # container (parent sessions AND pi-subagents children). Precedence: --compact-* CLI flag > env > shipped default.
 # soft 50% / warning 70% / forced 85% (70% + 15% buffer) of the active model's context window.
