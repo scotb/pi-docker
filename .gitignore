@@ -3,7 +3,3 @@
 node_modules
 package-lock.json
 package.json
-
-# Vendored fork of the self-compact extension (own git repo: origin=scotb fork, upstream=disler).
-# Patches live on its 'local' branch — see self-compact-pi-agent/SYNC.md. The image builds from the working tree.
-self-compact-pi-agent/

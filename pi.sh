@@ -31,10 +31,32 @@ if [[ "$project" == "/" || "$project" == "$HOME" ]]; then
   exit 1
 fi
 
+# --dev: also mount the extension fork repos from their home on the host
+# (/data/apps), so the entrypoint's live-fork override takes effect while
+# developing pi-docker. The flag is consumed here and never passed to pi.
+dev=0
+args=()
+for arg in "$@"; do
+    case "$arg" in
+        --dev) dev=1 ;;
+        *) args+=("$arg") ;;
+    esac
+done
+
+mounts=(
+    -v "$HOME/.pi:/home/ubuntu/.pi"
+    -v "$project:/host$project"
+)
+if [[ "$dev" == 1 ]]; then
+    mounts+=(
+        -v "$HOME/data/apps/pi-subagents:/host/data/apps/pi-subagents"
+        -v "$HOME/data/apps/self-compact-pi-agent:/host/data/apps/self-compact-pi-agent"
+    )
+fi
+
 # Run the container with the given command
 docker run -it --rm \
-        -v "$HOME/.pi:/home/ubuntu/.pi" \
-        -v "$project:/host$project" \
+        "${mounts[@]}" \
         -e "LLAMA_SERVER_URL=http://host.docker.internal:8007" \
         -w "/host$project" \
-        pi-sandbox:latest "$@"
+        pi-sandbox:latest ${args[@]+"${args[@]}"}

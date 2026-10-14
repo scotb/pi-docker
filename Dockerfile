@@ -8,6 +8,11 @@
 #   FORK_URL   — Git URL for the Pi monorepo (default: official repo)
 #   FORK_HASH  — Full 40-char commit hash to pin the build to.
 #                Recommended over branch names for reproducible, auditable builds.
+#   PI_SUBAGENTS_URL / PI_SUBAGENTS_HASH
+#                scotb/pi-subagents fork; pin the 'self-compact' branch tip.
+#   SELF_COMPACT_URL / SELF_COMPACT_HASH
+#                scotb/self-compact-pi-agent fork; pin the 'deploy' branch tip.
+#                (same URL/HASH pattern as FORK_URL/FORK_HASH)
 #   GIT_USER_NAME / GIT_USER_EMAIL
 #                Optional local-only git identity for commits made inside the
 #                container (author name/email). No credentials are stored —
@@ -139,6 +144,46 @@ ENV PATH="/home/ubuntu/.pi/bin:${PATH}"
 
 # The base image ships with an 'ubuntu' user at UID 1000.
 WORKDIR /workspace
+
+# Extension forks, cloned from GitHub at pinned SHAs (same pattern as the pi
+# monorepo in the build stage: reproducible, auditable builds).
+#   pi-subagents:  'self-compact' branch — patched runner with the self-compact
+#                  drain-hold gate + child context-management tools.
+#   self-compact:  'deploy' branch — context-bar footer, thresholds, audit
+#                  logging (see SYNC.md in that repo).
+# Bump the SHAs after every fork push (especially post-rebase) and rebuild.
+ARG PI_SUBAGENTS_URL=https://github.com/scotb/pi-subagents
+ARG PI_SUBAGENTS_HASH=
+ARG SELF_COMPACT_URL=https://github.com/scotb/self-compact-pi-agent
+ARG SELF_COMPACT_HASH=
+
+RUN git clone --depth 1 "${PI_SUBAGENTS_URL}" /tmp/pi-subagents \
+    && cd /tmp/pi-subagents \
+    && if [ -n "${PI_SUBAGENTS_HASH}" ]; then \
+           if [ "$(git rev-parse HEAD)" != "${PI_SUBAGENTS_HASH}" ]; then \
+               git fetch --depth 1 origin "${PI_SUBAGENTS_HASH}" \
+                   || (echo "ERROR: commit ${PI_SUBAGENTS_HASH} not found" >&2; exit 1); \
+               git checkout "${PI_SUBAGENTS_HASH}" \
+                   || (echo "ERROR: cannot checkout ${PI_SUBAGENTS_HASH}" >&2; exit 1); \
+           fi; \
+       fi \
+    && git clone --depth 1 "${SELF_COMPACT_URL}" /tmp/self-compact-pi-agent \
+    && cd /tmp/self-compact-pi-agent \
+    && if [ -n "${SELF_COMPACT_HASH}" ]; then \
+           if [ "$(git rev-parse HEAD)" != "${SELF_COMPACT_HASH}" ]; then \
+               git fetch --depth 1 origin "${SELF_COMPACT_HASH}" \
+                   || (echo "ERROR: commit ${SELF_COMPACT_HASH} not found" >&2; exit 1); \
+               git checkout "${SELF_COMPACT_HASH}" \
+                   || (echo "ERROR: cannot checkout ${SELF_COMPACT_HASH}" >&2; exit 1); \
+           fi; \
+       fi \
+    && mkdir -p /opt/pi-extensions \
+    && cp -a /tmp/pi-subagents /opt/pi-extensions/pi-subagents \
+    && cp -a /tmp/self-compact-pi-agent/apps/self-compact /opt/pi-extensions/self-compact \
+    && cd /opt/pi-extensions/pi-subagents && npm install --omit=dev \
+    && chown -R ubuntu:ubuntu /opt/pi-extensions \
+    && rm -rf /tmp/pi-subagents /tmp/self-compact-pi-agent
+
 USER ubuntu
 
 # Apply the git identity as the ubuntu user (writes /home/ubuntu/.gitconfig).
@@ -151,16 +196,9 @@ RUN if [ -n "${GIT_USER_NAME}" ] && [ -n "${GIT_USER_EMAIL}" ]; then \
         echo "GIT_USER_NAME / GIT_USER_EMAIL not set — skipping git identity"; \
     fi
 
-# Copy bundled extensions and startup script outside of ~/.pi/ so they survive
-# the host volume mount (the host mount overwrites ~/.pi/ at runtime).
+# Copy the startup script outside of ~/.pi/ so it survives the host volume
+# mount (the host mount overwrites ~/.pi/ at runtime).
 COPY --chown=ubuntu:ubuntu entrypoint.sh /home/ubuntu/entrypoint.sh
-# self-compact extension (vendored fork — see self-compact-pi-agent/SYNC.md).
-COPY --chown=ubuntu:ubuntu self-compact-pi-agent/apps/self-compact /opt/pi-extensions/self-compact
-# pi-subagents (vendored fork — patched runner with the self-compact drain-hold gate +
-# child context-management tools). The entrypoint re-syncs from
-# /host/data/apps/pi-docker/pi-subagents when the /host mount is present (dev iteration).
-COPY --chown=ubuntu:ubuntu pi-subagents /opt/pi-extensions/pi-subagents
-RUN cd /opt/pi-extensions/pi-subagents && npm install --omit=dev
 # Context thresholds for the self-compact extension, applied to every Pi process in the
 # container (parent sessions AND pi-subagents children). Precedence: --compact-* CLI flag > env > shipped default.
 # soft 50% / warning 70% / forced 85% (70% + 15% buffer) of the active model's context window.
