@@ -18,7 +18,11 @@ DEV="${PI_DEV:-0}"
 SC_LIVE="/host/data/apps/self-compact-pi-agent/apps/self-compact"
 SC_BAKED="/opt/pi-extensions/self-compact"
 SC_SRC="$SC_BAKED"
-if [ "$DEV" = "1" ] && [ -d "$SC_LIVE" ]; then
+# A live fork counts only if it actually contains a checkout. A bind source
+# that does not exist on the host is auto-created by docker as an empty
+# directory, which would otherwise be copied over the baked extension and
+# silently disable it.
+if [ "$DEV" = "1" ] && [ -f "$SC_LIVE/package.json" ]; then
     SC_SRC="$SC_LIVE"
 fi
 SC_DST="$HOME/.pi/agent/extensions/self-compact"
@@ -36,7 +40,7 @@ echo "self-compact extension installed from $SC_SRC @ $SC_SHA"
 PS_LIVE="/host/data/apps/pi-subagents"
 PS_BAKED="/opt/pi-extensions/pi-subagents"
 PS_SRC="$PS_BAKED"
-if [ "$DEV" = "1" ] && [ -d "$PS_LIVE" ]; then
+if [ "$DEV" = "1" ] && [ -f "$PS_LIVE/package.json" ]; then
     PS_SRC="$PS_LIVE"
 fi
 PS_DST="$HOME/.pi/agent/extensions/pi-subagents"

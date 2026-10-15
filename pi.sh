@@ -51,8 +51,8 @@ envs=(-e "LLAMA_SERVER_URL=http://host.docker.internal:8007")
 if [[ "$dev" == 1 ]]; then
     envs+=(-e PI_DEV=1)
     mounts+=(
-        -v "$HOME/data/apps/pi-subagents:/host/data/apps/pi-subagents"
-        -v "$HOME/data/apps/self-compact-pi-agent:/host/data/apps/self-compact-pi-agent"
+        -v "/data/apps/pi-subagents:/host/data/apps/pi-subagents"
+        -v "/data/apps/self-compact-pi-agent:/host/data/apps/self-compact-pi-agent"
     )
 fi
 
