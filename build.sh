@@ -39,7 +39,7 @@ args=()
 echo "=== Resolved build inputs ==="
 for row in "${REPOS[@]}"; do
     IFS='|' read -r name url branch hash_env arg_prefix <<<"$row"
-    upper="$(tr '[:lower:]' '[:upper:]' <<<"$name" | tr '-' '_")"
+    upper="$(tr '[:lower:]' '[:upper:]' <<<"$name" | tr '-' '_')"
     url_env="${upper}_URL"
     url="${!url_env:-$url}"
     sha="${!hash_env:-}"
