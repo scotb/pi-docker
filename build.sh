@@ -32,14 +32,14 @@ done
 REPOS=(
     "pi|https://github.com/earendil-works/pi|main|PI_HASH|FORK"
     "pi-subagents|https://github.com/scotb/pi-subagents|self-compact|PI_SUBAGENTS_HASH|PI_SUBAGENTS"
-    "self-compact|https://github.com/scotb/self-compact-pi-agent|deploy|SELF_COMPACT_HASH"
+    "self-compact|https://github.com/scotb/self-compact-pi-agent|deploy|SELF_COMPACT_HASH|SELF_COMPACT"
 )
 
 args=()
 echo "=== Resolved build inputs ==="
 for row in "${REPOS[@]}"; do
     IFS='|' read -r name url branch hash_env arg_prefix <<<"$row"
-    upper="$(tr '[:lower:]' '[:upper:]' <<<"$name")"
+    upper="$(tr '[:lower:]' '[:upper:]' <<<"$name" | tr '-' '_")"
     url_env="${upper}_URL"
     url="${!url_env:-$url}"
     sha="${!hash_env:-}"
