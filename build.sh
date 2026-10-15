@@ -12,7 +12,8 @@
 #   PI_SUBAGENTS_HASH=a85db042... ./build.sh       # pin one repo to a commit
 #   PI_URL=https://github.com/you/pi ./build.sh    # point pi at a fork
 #   GIT_USER_NAME="S" GIT_USER_EMAIL="s@x" ./build.sh
-#   ./build.sh --tag pi-sandbox:test
+#   ./build.sh --tag pi-sandbox:1.3.0 --tag pi-sandbox:2026-10-15
+#     (--tag is repeatable; pi-sandbox:latest is always tagged)
 #
 # Adding a baked extension: add a row to REPOS below and a matching clone
 # block in the Dockerfile (same shape as the existing ones).
@@ -20,11 +21,11 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-TAG="pi-sandbox:latest"
+TAGS=("pi-sandbox:latest")
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --tag) TAG="$2"; shift 2 ;;
-        *) echo "unknown arg: $1 (use --tag)" >&2; exit 1 ;;
+        --tag) TAGS+=("$2"); shift 2 ;;
+        *) echo "unknown arg: $1 (use --tag, repeatable)" >&2; exit 1 ;;
     esac
 done
 
@@ -59,4 +60,8 @@ for v in GIT_USER_NAME GIT_USER_EMAIL; do
     [ -n "${!v:-}" ] && args+=(--build-arg "$v=${!v}")
 done
 
-docker build "${args[@]}" -t "$TAG" -f Dockerfile .
+tag_args=()
+for t in "${TAGS[@]}"; do
+    tag_args+=(-t "$t")
+done
+docker build "${args[@]}" "${tag_args[@]}" -f Dockerfile .

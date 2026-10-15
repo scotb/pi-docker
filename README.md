@@ -17,7 +17,8 @@ echoed, so the exact provenance is on the record.
 ./build.sh                                     # heads of tracked branches
 PI_SUBAGENTS_HASH=a85db042... ./build.sh       # pin one repo to a commit
 PI_URL=https://github.com/you/pi ./build.sh    # point pi at a fork
-./build.sh --tag pi-sandbox:2026-10-15         # date-tag for roll back
+./build.sh --tag pi-sandbox:1.3.0 --tag pi-sandbox:2026-10-15
+#   ^ --tag is repeatable; pi-sandbox:latest is always tagged too
 ```
 
 The Dockerfile **refuses to build** with empty extension hashes, so a plain
@@ -34,7 +35,7 @@ The Dockerfile **refuses to build** with empty extension hashes, so a plain
 | `SELF_COMPACT_HASH` | **required** | Pin the `deploy` branch tip (or any commit) |
 | `GIT_USER_NAME` / `GIT_USER_EMAIL` | _(empty)_ | Local-only git identity for in-container commits |
 
-> **Recommended workflow:** build once per week with `./build.sh --tag pi-sandbox:$(date +%F)`. Roll back by running a previous date tag.
+> **Recommended workflow:** build once per week with `./build.sh --tag pi-sandbox:$(date +%F)`, adding a version tag as needed (`--tag` is repeatable, e.g. `--tag pi-sandbox:1.3.0`); `pi-sandbox:latest` is always tagged. Roll back by running a previous date tag.
 
 ### Local git identity (optional)
 
