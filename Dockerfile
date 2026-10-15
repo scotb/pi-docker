@@ -153,7 +153,8 @@ WORKDIR /workspace
 #                  drain-hold gate + child context-management tools.
 #   self-compact:  'deploy' branch — context-bar footer, thresholds, audit
 #                  logging (see SYNC.md in that repo).
-# Bump the SHAs after every fork push (especially post-rebase) and rebuild.
+# build.sh resolves branch heads to SHAs for you; the fail-fast check below
+# guarantees no silent default-branch-tip builds.
 ARG PI_SUBAGENTS_URL=https://github.com/scotb/pi-subagents
 ARG PI_SUBAGENTS_HASH=
 ARG SELF_COMPACT_URL=https://github.com/scotb/self-compact-pi-agent

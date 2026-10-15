@@ -6,31 +6,35 @@ Containerized development environment for [Pi](https://pi.dev) — a full develo
 
 ## Quick Start
 
-### Build with the latest official main branch
+### Build (pinned, reproducible)
+
+`build.sh` resolves every baked repo to an exact SHA before building: heads
+of the tracked branches by default (pi: `main`, pi-subagents: `self-compact`,
+self-compact: `deploy`), overridable per repo. The resolved inputs are
+echoed, so the exact provenance is on the record.
 
 ```bash
-docker build -t pi-sandbox .
+./build.sh                                     # heads of tracked branches
+PI_SUBAGENTS_HASH=a85db042... ./build.sh       # pin one repo to a commit
+PI_URL=https://github.com/you/pi ./build.sh    # point pi at a fork
+./build.sh --tag pi-sandbox:2026-10-15         # date-tag for roll back
 ```
 
-### Build from a specific fork and commit
-
-Pin to a commit hash for reproducible, auditable builds:
-
-```bash
-docker build \
-  --build-arg FORK_URL=https://github.com/scotb/pi \
-  --build-arg FORK_HASH=a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2 \
-  -t pi-sandbox .
-```
+The Dockerfile **refuses to build** with empty extension hashes, so a plain
+`docker build` is no longer a valid path — always go through `build.sh`
+(or pass the hashes explicitly).
 
 | Build arg | Default | Description |
 |---|---|---|
 | `FORK_URL` | `https://github.com/earendil-works/pi` | Git URL for the Pi monorepo |
-| `FORK_HASH` | _(empty)_ | Full 40-char commit hash. Omit to use the branch's current HEAD. |
-| `GIT_USER_NAME` | _(empty)_ | Local-only git identity (author name) for commits made inside the container |
-| `GIT_USER_EMAIL` | _(empty)_ | Local-only git identity (author email) for commits made inside the container |
+| `FORK_HASH` | _(empty = default-branch tip)_ | Pin pi to a commit |
+| `PI_SUBAGENTS_URL` | `https://github.com/scotb/pi-subagents` | Fork URL |
+| `PI_SUBAGENTS_HASH` | **required** | Pin the `self-compact` branch tip (or any commit) |
+| `SELF_COMPACT_URL` | `https://github.com/scotb/self-compact-pi-agent` | Fork URL |
+| `SELF_COMPACT_HASH` | **required** | Pin the `deploy` branch tip (or any commit) |
+| `GIT_USER_NAME` / `GIT_USER_EMAIL` | _(empty)_ | Local-only git identity for in-container commits |
 
-> **Recommended workflow:** Build once per week, tag the image with the date, and pin to the commit hash. Roll back by running a previous tag.
+> **Recommended workflow:** build once per week with `./build.sh --tag pi-sandbox:$(date +%F)`. Roll back by running a previous date tag.
 
 ### Local git identity (optional)
 
@@ -49,123 +53,25 @@ docker build \
 ## Weekly Build Workflow
 
 ```bash
-# 1. Fetch latest commits
-git -C /data/apps/pi clone fetch origin main
-
-# 2. Get the current commit hash
-COMMIT=$(git ls-remote origin main | cut -f1)
-echo "Building against: $COMMIT"
-
-# 3. Build and tag
-docker build \
-  --build-arg FORK_URL=https://github.com/scotb/pi \
-  --build-arg FORK_HASH="$COMMIT" \
-  --build-arg GIT_USER_NAME="Your Name" \
-  --build-arg GIT_USER_EMAIL="you@example.com" \
-  -t pi-sandbox:latest \
-  -t pi-sandbox:$(date +%F) \
-  .
-
-# 4. If something breaks, roll back to last week's image
-docker run -it --rm pi-sandbox:$(date -d '7 days ago' +%F)
+./build.sh --tag pi-sandbox:$(date +%F)
 ```
 
-## Image Tagging
-
-Docker image tags are how you version, version-control, and roll back your Pi sandbox. Every `docker build` command accepts one or more `-t <name>` flags to assign tags.
-
-### Single tag
-
-The simplest form — one name, one version:
+Date tags make roll-back trivial — run an older tag:
 
 ```bash
-docker build -t pi-sandbox:2025-07-14 .
+docker run -it --rm pi-sandbox:2026-10-08
 ```
 
-### Multiple tags in one build
-
-Assign **multiple tags** to the same build with multiple `-t` flags. The first tag in the sequence is the **default** — it's the name used when you omit a tag later:
-
-```bash
-docker build \
-  --build-arg FORK_HASH="$(git ls-remote origin main | cut -f1)" \
-  -t pi-sandbox:latest \
-  -t pi-sandbox:2025-07-14 \
-  -t pi-sandbox:$(git ls-remote origin main | cut -f1 | cut -c1-7) \
-  .
-```
-
-This creates **three** tags pointing to the exact same image:
-
-| Tag | Meaning |
-|---|---|
-| `pi-sandbox:latest` | Convenience alias — always points to the most recent build. |
-| `pi-sandbox:2025-07-14` | Date-based tag — easy to reason about, easy to roll back. |
-| `pi-sandbox:a1b2c3d` | Short commit hash — tells you **exactly** which commit was built. |
-
-### Tag naming strategies
-
-| Strategy | Example tag | Best for |
-|---|---|---|
-| **Date** | `pi-sandbox:2025-07-14` | Human-readable versioning; roll back by going back a number of days. |
-| **Short commit hash** | `pi-sandbox:a1b2c3d` | Auditable — tells you exactly which commit was baked in. |
-| **Full commit hash** | `pi-sandbox:a1b2c3d4e5f6...` | Immutable — guaranteed to be the exact commit (40 chars). |
-| **Fork alias** | `pi-sandbox:fork` | You maintain a personal fork; this tag always points to your fork's tip. |
-| **Version** | `pi-sandbox:v0.84.1` | If your fork produces releases with semantic versions. |
-
-### Common operations
+Common operations:
 
 ```bash
 # List all tagged images
 docker images pi-sandbox
 
-# Inspect a specific tag (shows commit hash, build date, etc.)
-docker inspect pi-sandbox:2025-07-14 --format='{{json .RepoTags}}'
-
-# Run a specific tagged version
-docker run -it --rm pi-sandbox:2025-07-14
-
-# Run the latest build (omit the tag — Docker uses the default)
-docker run -it --rm pi-sandbox
-
 # Retain only the 5 most recent date-tagged builds
 docker images pi-sandbox --format '{{.Tag}}' | grep -v 'latest' | tail -n +6 | while read tag; do
   docker rmi "pi-sandbox:$tag"
 done
-```
-
-### Recommended weekly tagging pattern
-
-Combine **all three** tag strategies in a single build command:
-
-```bash
-# 1. Fetch latest
-git fetch origin main
-
-# 2. Get the commit info
-COMMIT=$(git ls-remote origin main | cut -f1)
-SHORT=$(git ls-remote origin main | cut -f1 | cut -c1-7)
-DATE=$(date +%F)
-
-# 3. Build with all three tags
-docker build \
-  --build-arg FORK_URL=https://github.com/earendil-works/pi \
-  --build-arg FORK_HASH="$COMMIT" \
-  -t pi-sandbox:latest \
-  -t pi-sandbox:"$DATE" \
-  -t pi-sandbox:"$SHORT" \
-  .
-
-echo "Built: $SHORT ($DATE)"
-```
-
-Result — one image, three ways to reference it:
-```
-$ docker images pi-sandbox
-REPOSITORY      TAG         IMAGE ID       SIZE
-pi-sandbox      latest      a1b2c3d4e5f6   2.4 GB
-pi-sandbox      2025-07-14    a1b2c3d4e5f6   2.4 GB
-pi-sandbox      a1b2c3d     a1b2c3d4e5f6   2.4 GB
 ```
 
 The Pi monorepo takes dependency integrity seriously. This Dockerfile leverages several mechanisms:
@@ -203,6 +109,12 @@ pi
 
 Starts an interactive Pi session with the current directory mounted at `/host/<path>` inside the container. Each project gets its own identity — separate session history, trust decisions, and settings.
 
+Add `--dev` to mount the live extension forks from `~/data/apps` — the entrypoint then installs extensions from there instead of the image-baked copies (for iterating on the forks):
+
+```bash
+pi --dev
+```
+
 ### Run commands directly
 
 ```bash
@@ -231,8 +143,15 @@ Automatic context management for long-running sessions: context bar in the foote
 progress, and next action. Re-synced from the image into `~/.pi/agent/extensions/` at
 container startup.
 
-Source: the `self-compact-pi-agent` fork (own git repo, pinned in its `SYNC.md` —
-not part of this repo's git). Details: `docs/adr/0001-self-compact-context-management.md`.
+Source: the `self-compact-pi-agent` fork (`deploy` branch, pinned at build —
+see `build.sh`). Details: `docs/adr/0001-self-compact-context-management.md`.
+
+### pi-subagents (bundled)
+
+Sub-agent orchestration (the `subagent` tool), built from the `pi-subagents`
+fork's `self-compact` branch: a patched runner with the self-compact drain-hold
+gate plus child context-management tools, so async children can compact
+themselves mid-mission. Same install pattern as self-compact.
 
 ## Volume mounts
 
@@ -240,6 +159,7 @@ not part of this repo's git). Details: `docs/adr/0001-self-compact-context-manag
 |---|---|---|
 | `.` (cur dir) | `/host/.` (identity) | Project files — one identity per project |
 | `~/.pi` | `/home/ubuntu/.pi` | Pi config (sessions, settings, extensions, **core binaries**) |
+| `~/data/apps/{pi-subagents,self-compact-pi-agent}` | `/host/data/apps/...` | Live extension forks — **only** with `pi --dev` |
 
 ## What's inside
 
@@ -279,21 +199,14 @@ not part of this repo's git). Details: `docs/adr/0001-self-compact-context-manag
 
 ## Building from a fork
 
-If you maintain your own fork and want to switch between official and fork builds without editing the Dockerfile:
+Per-repo URL/hash overrides make forks a one-liner — no Dockerfile edits:
 
 ```bash
-# Official repo, main branch
-docker build -t pi-sandbox .
+# Your pi fork, main branch
+PI_URL=https://github.com/scotb/pi ./build.sh
 
-# Your fork, main branch
-docker build --build-arg FORK_URL=https://github.com/scotb/pi -t pi-sandbox:fork .
-
-# Your fork, specific commit
-docker build \
-  --build-arg FORK_URL=https://github.com/scotb/pi \
-  --build-arg FORK_HASH="$(git -C ~/src/pi rev-parse HEAD)" \
-  -t pi-sandbox:fork-$(git -C ~/src/pi rev-parse --short HEAD) \
-  .
+# Your pi fork, specific commit
+PI_URL=https://github.com/scotb/pi PI_HASH=$(git -C ~/src/pi rev-parse HEAD) ./build.sh
 ```
 
 ## Configuration

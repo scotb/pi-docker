@@ -52,5 +52,6 @@ else
     PS_SHA="$(cat "$PS_BAKED.sha" 2>/dev/null || echo '?')"
 fi
 echo "pi-subagents installed from $PS_SRC @ $PS_SHA"
+echo "pi installed at /opt/pi @ $(cat /opt/pi.sha 2>/dev/null || echo '?')"
 
 exec node /opt/pi/packages/coding-agent/dist/cli.js "$@"
