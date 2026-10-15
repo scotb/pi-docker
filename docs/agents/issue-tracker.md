@@ -1,30 +1,29 @@
-# Issue tracker: Local Markdown
+# Issue tracker
 
-Issues and PRDs for this repo live as markdown files in `.scratch/`.
+Issues are local markdown files under `.scratch/<feature>/` — deliberately
+not in a remote tracker. `.scratch/` is gitignored; it is working state,
+not repo content.
 
-## Conventions
+## Layout
 
-- One feature per directory: `.scratch/<feature-slug>/`
-- The PRD is `.scratch/<feature-slug>/PRD.md`
-- Implementation issues are `.scratch/<feature-slug>/issues/<NN>-<slug>.md`, numbered from `01`
-- Triage state is recorded as a `Status:` line near the top of each issue file (see `triage-labels.md` for the role strings)
-- Comments and conversation history append to the bottom of the file under a `## Comments` heading
+```
+.scratch/<feature>/
+  PRD.md              # what and why (one page)
+  issues/
+    NN-slug.md        # one file per issue, numbered in priority order
+  HANDOFF.md          # optional: current state for the next session/agent
+```
 
-## When a skill says "publish to the issue tracker"
+## Lifecycle
 
-Create a new file under `.scratch/<feature-slug>/` (creating the directory if needed).
+Each issue file carries a triage label in its front matter (see
+`triage-labels.md`). An issue is done when its file is deleted or moved —
+completed working state does not accumulate in `.scratch/`.
 
-## When a skill says "fetch the relevant ticket"
+## Rules
 
-Read the file at the referenced path. The user will normally pass the path or the issue number directly.
-
-## Wayfinding operations
-
-Used by `/wayfinder`. The **map** is a file with one **child** file per ticket.
-
-- **Map**: `.scratch/<effort>/map.md` — the Notes / Decisions-so-far / Fog body.
-- **Child ticket**: `.scratch/<effort>/issues/NN-<slug>.md`, numbered from `01`, with the question in the body. A `Type:` line records the ticket type (`research`/`prototype`/`grilling`/`task`); a `Status:` line records `claimed`/`resolved`.
-- **Blocking**: a `Blocked by: NN, NN` line near the top. A ticket is unblocked when every file it lists is `resolved`.
-- **Frontier**: scan `.scratch/<effort>/issues/` for files that are open, unblocked, and unclaimed; first by number wins.
-- **Claim**: set `Status: claimed` and save before any work.
-- **Resolve**: append the answer under an `## Answer` heading, set `Status: resolved`, then append a context pointer (gist + link) to the map's Decisions-so-far in `map.md`.
+- One directory per feature; create it when work starts.
+- Keep issue files short and current — they are the source of truth for
+  agents picking up the work.
+- Clean up `.scratch/` when a feature ships (the repo's git history and
+  ADRs are the durable record).

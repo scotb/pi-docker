@@ -191,8 +191,9 @@ RUN git clone --depth 1 "${PI_SUBAGENTS_URL}" /tmp/pi-subagents \
     && mkdir -p /opt/pi-extensions \
     && cp -a /tmp/pi-subagents /opt/pi-extensions/pi-subagents \
     && cp -a /tmp/self-compact-pi-agent/apps/self-compact /opt/pi-extensions/self-compact \
-    && cd /opt/pi-extensions/pi-subagents && npm install --omit=dev \
+    && cd /opt/pi-extensions/pi-subagents && npm ci --omit=dev \
     && git -C /tmp/pi-subagents rev-parse HEAD > /opt/pi-extensions/pi-subagents.sha \
+    && rm -rf /opt/pi-extensions/pi-subagents/.git \
     && git -C /tmp/self-compact-pi-agent rev-parse HEAD > /opt/pi-extensions/self-compact.sha \
     && chown -R ubuntu:ubuntu /opt/pi-extensions \
     && rm -rf /tmp/pi-subagents /tmp/self-compact-pi-agent
