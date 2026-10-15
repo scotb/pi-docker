@@ -133,8 +133,10 @@ ENV NODE_PATH=/usr/lib/node_modules
 COPY tools/page-shot.cjs /usr/local/bin/page-shot
 RUN chmod +x /usr/local/bin/page-shot
 
-# Copy the built Pi into /opt/pi/.
+# Copy the built Pi into /opt/pi/ and record the exact commit baked in.
 COPY --from=build /tmp/pi-dist /opt/pi
+ARG FORK_HASH
+RUN if [ -n "${FORK_HASH}" ]; then echo "${FORK_HASH}" > /opt/pi.sha; fi
 
 # Trim the npm cache carried over from the build stage
 RUN rm -rf /opt/pi/node_modules/.cache
@@ -156,6 +158,14 @@ ARG PI_SUBAGENTS_URL=https://github.com/scotb/pi-subagents
 ARG PI_SUBAGENTS_HASH=
 ARG SELF_COMPACT_URL=https://github.com/scotb/self-compact-pi-agent
 ARG SELF_COMPACT_HASH=
+
+# Fail fast: extension builds must be pinned to exact SHAs (no silent
+# default-branch-tip builds). Use ./build.sh, which resolves branch heads
+# to SHAs, or pass the hashes explicitly.
+RUN if [ -z "${PI_SUBAGENTS_HASH}" ] || [ -z "${SELF_COMPACT_HASH}" ]; then \
+        echo "ERROR: PI_SUBAGENTS_HASH / SELF_COMPACT_HASH are required — run ./build.sh" >&2; \
+        exit 1; \
+    fi
 
 RUN git clone --depth 1 "${PI_SUBAGENTS_URL}" /tmp/pi-subagents \
     && cd /tmp/pi-subagents \
@@ -181,6 +191,8 @@ RUN git clone --depth 1 "${PI_SUBAGENTS_URL}" /tmp/pi-subagents \
     && cp -a /tmp/pi-subagents /opt/pi-extensions/pi-subagents \
     && cp -a /tmp/self-compact-pi-agent/apps/self-compact /opt/pi-extensions/self-compact \
     && cd /opt/pi-extensions/pi-subagents && npm install --omit=dev \
+    && git -C /tmp/pi-subagents rev-parse HEAD > /opt/pi-extensions/pi-subagents.sha \
+    && git -C /tmp/self-compact-pi-agent rev-parse HEAD > /opt/pi-extensions/self-compact.sha \
     && chown -R ubuntu:ubuntu /opt/pi-extensions \
     && rm -rf /tmp/pi-subagents /tmp/self-compact-pi-agent
 
