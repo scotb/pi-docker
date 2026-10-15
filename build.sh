@@ -40,7 +40,8 @@ echo "=== Resolved build inputs ==="
 for row in "${REPOS[@]}"; do
     IFS='|' read -r name url branch hash_env arg_prefix <<<"$row"
     upper="$(tr '[:lower:]' '[:upper:]' <<<"$name")"
-    url="${!${upper}_URL:-$url}"
+    url_env="${upper}_URL"
+    url="${!url_env:-$url}"
     sha="${!hash_env:-}"
     if [ -z "$sha" ]; then
         sha="$(git ls-remote "$url" "refs/heads/$branch" | awk 'NR==1{print $1}')"
