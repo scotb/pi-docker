@@ -3,3 +3,5 @@
 node_modules
 package-lock.json
 package.json
+!vendor/extension-lock/package.json
+!vendor/extension-lock/package-lock.json

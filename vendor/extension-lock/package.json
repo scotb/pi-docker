@@ -1,0 +1,10 @@
+{
+  "name": "pi-baked-extensions",
+  "private": true,
+  "description": "Exact-version lockfile workspace for the npm packages baked into the pi-sandbox image. Never edited by hand except to bump a pinned version (a deliberate upgrade event).",
+  "dependencies": {
+    "pi-hermes-memory": "0.9.10",
+    "pi-lean-ctx": "3.11.4",
+    "pi-web-access": "0.41.0"
+  }
+}

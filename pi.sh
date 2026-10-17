@@ -43,8 +43,12 @@ for arg in "$@"; do
     esac
 done
 
+# Agent state lives in a named volume, not a host bind mount: the image
+# owns code, the volume owns state. To run against a different state
+# (e.g. a pre-change snapshot), use PI_VOLUME=<name> pi — volumes coexist,
+# nothing is ever deleted.
 mounts=(
-    -v "$HOME/.pi:/home/ubuntu/.pi"
+    -v "${PI_VOLUME:-pi-state}:/home/ubuntu/.pi"
     -v "$project:/host$project"
 )
 envs=(-e "LLAMA_SERVER_URL=http://host.docker.internal:8007")

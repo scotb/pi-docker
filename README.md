@@ -28,12 +28,19 @@ The Dockerfile **refuses to build** with empty extension hashes, so a plain
 | Build arg | Default | Description |
 |---|---|---|
 | `FORK_URL` | `https://github.com/earendil-works/pi` | Git URL for the Pi monorepo |
-| `FORK_HASH` | _(empty = default-branch tip)_ | Pin pi to a commit |
+| `FORK_HASH` | `71023aec…` (pi 1.3.0) | Pin pi to a commit (default: 1.3.0 release; override with `PI_HASH`) |
 | `PI_SUBAGENTS_URL` | `https://github.com/scotb/pi-subagents` | Fork URL |
 | `PI_SUBAGENTS_HASH` | **required** | Pin the `self-compact` branch tip (or any commit) |
 | `SELF_COMPACT_URL` | `https://github.com/scotb/self-compact-pi-agent` | Fork URL |
 | `SELF_COMPACT_HASH` | **required** | Pin the `deploy` branch tip (or any commit) |
+| `LEAN_CTX_BIN_VERSION` / `LEAN_CTX_BIN_SHA256` | `v3.11.4` + official sha256 | Pinned lean-ctx native binary (GitHub release); build fails on sha mismatch |
+| `TDD_LEDGER_SHA` | _(auto: this repo's HEAD via build.sh)_ | Provenance pin for the vendored tdd-ledger extension |
 | `GIT_USER_NAME` / `GIT_USER_EMAIL` | _(empty)_ | Local-only git identity for in-container commits |
+
+> The three upstream npm extensions (`pi-web-access`, `pi-hermes-memory`,
+> `pi-lean-ctx`) are pinned by the committed `vendor/extension-lock` lockfile,
+> not by build args — bump the version in `vendor/extension-lock/package.json`,
+> regenerate the lockfile, rebuild (ADR-0002).
 
 > **Recommended workflow:** build once per week with `./build.sh --tag pi-sandbox:$(date +%F)`, adding a version tag as needed (`--tag` is repeatable, e.g. `--tag pi-sandbox:1.3.0`); `pi-sandbox:latest` is always tagged. Roll back by running a previous date tag.
 
@@ -89,11 +96,10 @@ The Pi monorepo takes dependency integrity seriously. This Dockerfile leverages 
 
 ### Prerequisites
 
-The containerized version of Pi requires the `lean-ctx` binary to be present on your **host machine**. The container relies on a volume mount to access these core agent tools.
-
-```bash
-curl -fsSL https://api.earendil.works/install.sh | bash -s -- --dest ~/.pi/bin
-```
+None — the `lean-ctx` binary is baked into the image at a pinned version
+(`/opt/pi-extensions/lean-ctx/bin/lean-ctx`), and all bundled extensions are
+installed by the entrypoint at container start. Agent state lives in the
+named volume `pi-state` (see Volume mounts below).
 
 ### Install the `pi` wrapper script
 
@@ -128,7 +134,7 @@ pi --list-models
 
 ```bash
 docker run -it --rm \
-  -v "$HOME/.pi:/home/ubuntu/.pi" \
+  -v pi-state:/home/ubuntu/.pi \
   -v "$(pwd):/host/$(pwd)" \
   -w "/host/$(pwd)" \
   pi-sandbox bash
@@ -154,12 +160,47 @@ fork's `self-compact` branch: a patched runner with the self-compact drain-hold
 gate plus child context-management tools, so async children can compact
 themselves mid-mission. Same install pattern as self-compact.
 
+### Baked upstream extensions (bundled)
+
+Extensions installed from the image instead of npm — deterministic, no runtime
+npm lookup, no network needed. Pinned exactly (ADR-0002), re-installed by the
+entrypoint at every container start, with a provenance line echoed at startup:
+
+| Extension | Pin | Notes |
+|---|---|---|
+| `pi-web-access` | lockfile (`vendor/extension-lock`) | Web search/fetch tools; provider keys from environment; cache in `~/.pi/agent/web-search-cache` |
+| `pi-hermes-memory` | lockfile | Cross-session memory; state in `~/.pi/agent/pi-hermes-memory/` + `~/.pi/agent/projects-memory/`; config in `~/.pi/agent/hermes-memory-config.json` |
+| `pi-lean-ctx` | lockfile + pinned binary `v3.11.4` (sha256-verified) | `ctx_*` tools + MCP bridge; **save-restore install** — it writes state (`config.json`, `mcp-schema-cache.json`) inside its own install dir, so the entrypoint moves them aside, replaces the dir, restores them; seeds the default `config.json` (baked binary) on a fresh volume; data dir `~/.pi/lean-ctx` |
+| `tdd-ledger` | vendored file (`vendor/tdd-ledger/`) | No upstream — this repo is the source of truth; ledger in `~/.pi/tdd-ledger` |
+
+The npm dependency tree is staged whole into the image
+(`/opt/pi-extensions/npm/node_modules`) and installed alongside each package
+directory under `~/.pi/agent/extensions/` (Node resolves hoisted deps by walking
+up; pi's discovery skips `node_modules`).
+
+**One-time state carryover:** agent state lives in the named volume
+`pi-state`, not a host bind mount. The one-time carryover of the pre-volume
+host `~/.pi` into that volume is a one-and-done host script kept OUT of this
+repo — `~/.pi/carryover-to-volume.sh`, run on the host while no pi container
+is running:
+
+```bash
+~/.pi/carryover-to-volume.sh --dry-run   # preview
+~/.pi/carryover-to-volume.sh             # apply
+```
+
+It tars `~/.pi` into the volume, excluding the npm-era cruft
+(`agent/npm`, `agent/mcp.json*`, `agent/extensions`, `agent/bin`), and
+strips the `npm:` entries from the volume's `settings.json` — the host
+`~/.pi` stays untouched, so the old image keeps working as a fallback.
+Delete the script once the carryover is done.
+
 ## Volume mounts
 
 | Host path | Container path | Purpose |
 |---|---|---|
 | `.` (cur dir) | `/host/.` (identity) | Project files — one identity per project |
-| `~/.pi` | `/home/ubuntu/.pi` | Pi config (sessions, settings, extensions, **core binaries**) |
+| `pi-state` (named volume; `PI_VOLUME` to override) | `/home/ubuntu/.pi` | Pi state (sessions, settings, extensions, config) |
 | `~/data/apps/{pi-subagents,self-compact-pi-agent}` | `/host/data/apps/...` | Live extension forks — **only** with `pi --dev` |
 
 ## What's inside
@@ -195,7 +236,7 @@ themselves mid-mission. Same install pattern as self-compact.
 
 ### Pi
 - **Pi CLI**: built from source with plain `npm run build` (no Bun) and shipped to `/opt/pi/`; the entrypoint runs it as `node /opt/pi/packages/coding-agent/dist/cli.js`
-- **Agent Tools**: `lean-ctx` (provided via host `~/.pi/bin` mount)
+- **Agent Tools**: `lean-ctx` (baked at a pinned version)
 - **llama-swap**: NOT configured in the image — provided by the host-mounted `~/.pi/agent/models.json`
 
 ## Building from a fork
@@ -212,6 +253,10 @@ PI_URL=https://github.com/scotb/pi PI_HASH=$(git -C ~/src/pi rev-parse HEAD) ./b
 
 ## Configuration
 
-llama-swap and the default model/provider are configured in `~/.pi/agent/models.json` on the host. This file is mounted into the container via the `~/.pi` volume mount, so no configuration is baked into the image.
+llama-swap and the default model/provider are configured in
+`~/.pi/agent/models.json`, in the `pi-state` volume. No configuration is
+baked into the image.
 
-If your llama-swap instance moves or changes port, update it in that file on the host — no rebuild is required.
+If your llama-swap instance moves or changes port, update the file in the
+volume (e.g. via a one-off `docker run -v pi-state:/data`) — no rebuild is
+required.

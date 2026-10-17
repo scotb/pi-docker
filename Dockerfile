@@ -13,6 +13,15 @@
 #   SELF_COMPACT_URL / SELF_COMPACT_HASH
 #                scotb/self-compact-pi-agent fork; pin the 'deploy' branch tip.
 #                (same URL/HASH pattern as FORK_URL/FORK_HASH)
+#   LEAN_CTX_BIN_VERSION / LEAN_CTX_BIN_SHA256
+#                Pinned lean-ctx native binary (GitHub release asset name is
+#                derived from the version). Defaults: v3.11.4 + its official
+#                sha256. The build fails if the download does not match.
+#                The npm extension packages are pinned by the committed
+#                vendor/extension-lock lockfile, not by build args.
+#   TDD_LEDGER_SHA
+#                This repo's own commit, recorded for tdd-ledger provenance
+#                (./build.sh passes it automatically).
 #   GIT_USER_NAME / GIT_USER_EMAIL
 #                Optional local-only git identity for commits made inside the
 #                container (author name/email). No credentials are stored —
@@ -197,6 +206,48 @@ RUN git clone --depth 1 "${PI_SUBAGENTS_URL}" /tmp/pi-subagents \
     && git -C /tmp/self-compact-pi-agent rev-parse HEAD > /opt/pi-extensions/self-compact.sha \
     && chown -R ubuntu:ubuntu /opt/pi-extensions \
     && rm -rf /tmp/pi-subagents /tmp/self-compact-pi-agent
+
+# Upstream extensions baked from the committed lockfile (ADR-0002).
+# The lockfile IS the pin: to upgrade an extension, bump the version in
+# vendor/extension-lock/package.json, regenerate package-lock.json, and
+# rebuild. --ignore-scripts: the published tarballs are prebuilt (verified),
+# so no lifecycle scripts run — no network, no compile, deterministic.
+# The WHOLE node_modules tree is staged (npm hoists deps to the tree root);
+# the entrypoint installs each package directory alongside node_modules
+# under ~/.pi/agent/extensions/ so pi auto-discovers the packages and Node
+# resolves their hoisted deps by walking up.
+COPY vendor/extension-lock /tmp/ext-lock
+RUN cd /tmp/ext-lock \
+    && npm ci --ignore-scripts \
+    && mkdir -p /opt/pi-extensions/npm \
+    && cp -a node_modules /opt/pi-extensions/npm/node_modules \
+    && jq '{"pi-web-access": .dependencies["pi-web-access"], "pi-hermes-memory": .dependencies["pi-hermes-memory"], "pi-lean-ctx": .dependencies["pi-lean-ctx"]}' package.json > /opt/pi-extensions/npm/manifest.json \
+    && rm -rf /tmp/ext-lock
+
+# lean-ctx native binary — pinned GitHub release, sha256-verified. The
+# extension and the binary share the same versioning scheme.
+ARG LEAN_CTX_BIN_VERSION=v3.11.4
+ARG LEAN_CTX_BIN_SHA256=5044d0393f7b51bbb861435bd9d98694339678b4f827a690216d870b6719d56a
+RUN curl -fsSL -o /tmp/lean-ctx.tar.gz \
+        "https://github.com/yvgude/lean-ctx/releases/download/${LEAN_CTX_BIN_VERSION}/lean-ctx-x86_64-unknown-linux-gnu.tar.gz" \
+    && echo "${LEAN_CTX_BIN_SHA256}  /tmp/lean-ctx.tar.gz" | sha256sum -c - \
+    && mkdir -p /opt/pi-extensions/lean-ctx/bin \
+    && tar -xzf /tmp/lean-ctx.tar.gz -C /opt/pi-extensions/lean-ctx/bin \
+    && chmod +x /opt/pi-extensions/lean-ctx/bin/lean-ctx \
+    && rm -f /tmp/lean-ctx.tar.gz \
+    && echo "${LEAN_CTX_BIN_VERSION}" > /opt/pi-extensions/lean-ctx.version
+
+# tdd-ledger — vendored in this repo (no upstream; the repo is the source
+# of truth). Provenance = this repo's own commit.
+COPY vendor/tdd-ledger /opt/pi-extensions/tdd-ledger
+ARG TDD_LEDGER_SHA=
+RUN if [ -n "${TDD_LEDGER_SHA}" ]; then \
+        echo "${TDD_LEDGER_SHA}" > /opt/pi-extensions/tdd-ledger.sha; \
+    fi
+
+# Chown the paths staged in this section (the fork block above chowned its own).
+RUN chown -R ubuntu:ubuntu /opt/pi-extensions/npm /opt/pi-extensions/lean-ctx \
+    /opt/pi-extensions/tdd-ledger /opt/pi-extensions/lean-ctx.version
 
 USER ubuntu
 

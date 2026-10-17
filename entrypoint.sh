@@ -13,6 +13,11 @@ set -euo pipefail
 
 DEV="${PI_DEV:-0}"
 
+# The state volume is fresh on first use (agent/extensions is excluded from
+# the carryover — the image owns extension code), so create it.
+EXT_DIR="$HOME/.pi/agent/extensions"
+mkdir -p "$EXT_DIR"
+
 # self-compact: live fork (dev iteration) or image-baked copy (production).
 # It keeps no state on disk (session state lives in the session journal).
 SC_LIVE="/host/data/apps/self-compact-pi-agent/apps/self-compact"
@@ -25,7 +30,7 @@ SC_SRC="$SC_BAKED"
 if [ "$DEV" = "1" ] && [ -f "$SC_LIVE/package.json" ]; then
     SC_SRC="$SC_LIVE"
 fi
-SC_DST="$HOME/.pi/agent/extensions/self-compact"
+SC_DST="$EXT_DIR/self-compact"
 rm -rf "$SC_DST"
 cp -a "$SC_SRC" "$SC_DST"
 if [ "$SC_SRC" = "$SC_LIVE" ]; then
@@ -56,6 +61,58 @@ else
     PS_SHA="$(cat "$PS_BAKED.sha" 2>/dev/null || echo '?')"
 fi
 echo "pi-subagents installed from $PS_SRC @ $PS_SHA"
+
+# Baked upstream extensions (ADR-0002): the whole node_modules tree plus
+# each package's own directory. pi auto-discovers the packages (their
+# package.json pi.extensions manifest) and Node resolves their hoisted
+# dependencies from the sibling node_modules directory. The node_modules
+# directory itself is never treated as an extension by pi's discovery.
+NPM_BAKED="/opt/pi-extensions/npm"
+rm -rf "$EXT_DIR/node_modules"
+cp -a "$NPM_BAKED/node_modules" "$EXT_DIR/node_modules"
+for pkg in pi-web-access pi-hermes-memory; do
+    rm -rf "$EXT_DIR/$pkg"
+    cp -a "$NPM_BAKED/node_modules/$pkg" "$EXT_DIR/$pkg"
+done
+# pi-lean-ctx: save-restore install (ADR-0002). This extension writes host
+# state (config.json, mcp-schema-cache.json) INSIDE its own install directory
+# — the path is hardcoded — so the state files are moved aside, the
+# directory is replaced cleanly, then the state is restored.
+LC_DST="$EXT_DIR/pi-lean-ctx"
+LC_STATE="$(mktemp -d)"
+for f in config.json mcp-schema-cache.json; do
+    if [ -f "$LC_DST/$f" ]; then mv "$LC_DST/$f" "$LC_STATE/$f"; fi
+done
+rm -rf "$LC_DST"
+cp -a "$NPM_BAKED/node_modules/pi-lean-ctx" "$LC_DST"
+for f in config.json mcp-schema-cache.json; do
+    if [ -f "$LC_STATE/$f" ]; then mv "$LC_STATE/$f" "$LC_DST/$f"; fi
+done
+rm -rf "$LC_STATE"
+# A fresh state volume has no lean-ctx state yet: seed the default config
+# so the MCP bridge spawns the baked binary (this is the extension's own
+# image-owned install dir, not user config).
+if [ ! -f "$LC_DST/config.json" ]; then
+    cat > "$LC_DST/config.json" <<'EOF'
+{
+  "mode": "additive",
+  "enableMcp": true,
+  "binary": "/opt/pi-extensions/lean-ctx/bin/lean-ctx",
+  "env": {
+    "LEAN_CTX_COMPRESSION": "off",
+    "LEAN_CTX_DATA_DIR": "/home/ubuntu/.pi/lean-ctx"
+  }
+}
+EOF
+fi
+# tdd-ledger: vendored in the pi-docker repo (no upstream).
+TL_DST="$EXT_DIR/tdd-ledger"
+rm -rf "$TL_DST"
+cp -a /opt/pi-extensions/tdd-ledger "$TL_DST"
+NPM_MANIFEST="$(jq -r 'to_entries | map(.key + "-" + .value) | join(", ")' "$NPM_BAKED/manifest.json" 2>/dev/null || echo '?')"
+echo "baked npm extensions installed from $NPM_BAKED @ $NPM_MANIFEST"
+echo "pi-lean-ctx installed from $NPM_BAKED/node_modules/pi-lean-ctx (state saved/restored); binary @ $(cat /opt/pi-extensions/lean-ctx.version 2>/dev/null || echo '?')"
+echo "tdd-ledger installed from /opt/pi-extensions/tdd-ledger @ $(cat /opt/pi-extensions/tdd-ledger.sha 2>/dev/null || echo '?') (pi-docker repo)"
 echo "pi installed at /opt/pi @ $(cat /opt/pi.sha 2>/dev/null || echo '?')"
 
 exec node /opt/pi/packages/coding-agent/dist/cli.js "$@"
