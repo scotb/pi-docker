@@ -36,13 +36,15 @@ The Dockerfile **refuses to build** with empty extension hashes, so a plain
 | `PI_SUBAGENTS_HASH` | **required** | Pin the `self-compact` branch tip (or any commit) |
 | `SELF_COMPACT_URL` | `https://github.com/scotb/self-compact-pi-agent` | Fork URL |
 | `SELF_COMPACT_HASH` | **required** | Pin the `deploy` branch tip (or any commit) |
+| `MATT_SKILLS_URL` | `https://github.com/mattpocock/skills` | Upstream skills repo; curated by `skills-manifest.txt` |
+| `MATT_SKILLS_HASH` | **required** | Pin the `main` branch tip (or any commit); build fails if a manifest entry is missing at the SHA |
 | `LEAN_CTX_BIN_VERSION` / `LEAN_CTX_BIN_SHA256` | `v3.11.4` + official sha256 | Pinned lean-ctx native binary (GitHub release); build fails on sha mismatch |
 | `TDD_LEDGER_SHA` | _(auto: this repo's HEAD via build.sh)_ | Provenance pin for the vendored tdd-ledger extension |
 | `GIT_USER_NAME` / `GIT_USER_EMAIL` | _(empty)_ | Local-only git identity for in-container commits |
 
 > The three upstream npm extensions (`pi-web-access`, `pi-hermes-memory`,
-> `pi-lean-ctx`) are pinned by the committed `vendor/extension-lock` lockfile,
-> not by build args — bump the version in `vendor/extension-lock/package.json`,
+> `pi-lean-ctx`) are pinned by the committed `extensions/extension-lock` lockfile,
+> not by build args — bump the version in `extensions/extension-lock/package.json`,
 > regenerate the lockfile, rebuild (ADR-0002).
 
 > **Recommended workflow:** build once per week with `./build.sh --tag pi-sandbox:$(date +%F)`, adding a version tag as needed (`--tag` is repeatable, e.g. `--tag pi-sandbox:1.3.0`); `pi-sandbox:latest` is always tagged. Roll back by running a previous date tag.
@@ -178,10 +180,10 @@ entrypoint at every container start, with a provenance line echoed at startup:
 
 | Extension | Pin | Notes |
 |---|---|---|
-| `pi-web-access` | lockfile (`vendor/extension-lock`) | Web search/fetch tools; provider keys from environment; cache in `~/.pi/agent/web-search-cache` |
+| `pi-web-access` | lockfile (`extensions/extension-lock`) | Web search/fetch tools; provider keys from environment; cache in `~/.pi/agent/web-search-cache` |
 | `pi-hermes-memory` | lockfile | Cross-session memory; state in `~/.pi/agent/pi-hermes-memory/` + `~/.pi/agent/projects-memory/`; config in `~/.pi/agent/hermes-memory-config.json` |
 | `pi-lean-ctx` | lockfile + pinned binary `v3.11.4` (sha256-verified) | `ctx_*` tools + MCP bridge; **save-restore install** — it writes state (`config.json`, `mcp-schema-cache.json`) inside its own install dir, so the entrypoint moves them aside, replaces the dir, restores them; seeds the default `config.json` (baked binary) on a fresh volume; data dir `~/.pi/lean-ctx` |
-| `tdd-ledger` | vendored file (`vendor/tdd-ledger/`) | No upstream — this repo is the source of truth; ledger in `~/.pi/tdd-ledger` |
+| `tdd-ledger` | local file (`extensions/tdd-ledger/`) | No upstream — this repo is the source of truth; ledger in `~/.pi/tdd-ledger` |
 
 The npm dependency tree is staged whole into the image
 (`/opt/pi-extensions/npm/node_modules`) and installed alongside each package

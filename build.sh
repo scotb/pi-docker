@@ -21,14 +21,15 @@
 # Adding a baked extension:
 #   git fork      — add a row to REPOS below and a matching clone block in
 #                   the Dockerfile (same shape as the existing ones).
-#   upstream npm  — add the exact version to vendor/extension-lock/package.json,
+#   upstream npm  — add the exact version to extensions/extension-lock/package.json,
 #                   regenerate package-lock.json, and add the package to the
 #                   Dockerfile's manifest jq line + the entrypoint's install loop.
-#   local code    — vendor the file(s) under vendor/<name>/, COPY them in the
+#   local code    — place the file(s) under extensions/<name>/ (or
+#                   skills/<name>/ for skills), COPY them in the
 #                   Dockerfile, and add an install block in entrypoint.sh.
-#   skills        — add a REPOS row (git SHA pin) + a clone block in the
-#                   Dockerfile; curate upstream skills via skills-manifest.txt
-#                   (ADR-0003).
+#   skills        — first-party skills live in skills/ (like
+#                   extensions/tdd-ledger); upstream skills are curated
+#                   via skills-manifest.txt (ADR-0003).
 set -euo pipefail
 
 cd "$(dirname "$0")"
@@ -50,7 +51,6 @@ REPOS=(
     "pi-subagents|https://github.com/scotb/pi-subagents|self-compact|PI_SUBAGENTS_HASH|PI_SUBAGENTS"
     "self-compact|https://github.com/scotb/self-compact-pi-agent|deploy|SELF_COMPACT_HASH|SELF_COMPACT"
     "matt-skills|https://github.com/mattpocock/skills|main|MATT_SKILLS_HASH|MATT_SKILLS"
-    "scotb-skills|https://github.com/scotb/skills|main|SCOTB_SKILLS_HASH|SCOTB_SKILLS"
 )
 
 args=()

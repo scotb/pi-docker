@@ -68,7 +68,6 @@ if [[ "$dev" == 1 ]]; then
     mounts+=(
         -v "/data/apps/pi-subagents:/host/data/apps/pi-subagents"
         -v "/data/apps/self-compact-pi-agent:/host/data/apps/self-compact-pi-agent"
-        -v "/data/apps/skills:/host/data/apps/skills"
     )
 fi
 

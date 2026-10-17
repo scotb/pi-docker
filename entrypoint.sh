@@ -112,9 +112,9 @@ cp -a /opt/pi-extensions/tdd-ledger "$TL_DST"
 
 # Baked skills (ADR-0003): the image owns skill code. ~/.pi/agent/skills/ is
 # reinstalled from the image on every start, so hand-dropped skills are
-# ephemeral by design. Two sources, both git-SHA-pinned at build:
-#   matt:  curated by skills-manifest.txt at build time (filtered set)
-#   scotb: whole repo, flattened here; live-mounted under PI_DEV=1
+# ephemeral by design. Two sources:
+#   matt:  third-party, curated by skills-manifest.txt at build time
+#   local: first-party, vendored in the pi-docker repo (like tdd-ledger)
 SKILLS_DIR="$HOME/.pi/agent/skills"
 rm -rf "$SKILLS_DIR"
 mkdir -p "$SKILLS_DIR"
@@ -128,34 +128,18 @@ for d in /opt/pi-skills/mattpocock/*/; do
 done
 echo "matt skills installed from /opt/pi-skills/mattpocock @ $(cat /opt/pi-skills/mattpocock.sha 2>/dev/null || echo '?') (${#MATT_SKILLS[@]}: $(IFS=', '; echo "${MATT_SKILLS[*]}"))"
 
-SCOTB_LIVE="/host/data/apps/skills"
-SCOTB_BAKED="/opt/pi-skills/scotb/skills"
-SCOTB_SRC="$SCOTB_BAKED"
-SCOTB_TAG="baked"
-# A live repo counts only if it actually contains a checkout (at least one
-# SKILL.md) — a fresh empty clone, or a bind path docker auto-created as an
-# empty directory, would otherwise install nothing over the baked set.
-if [ "$DEV" = "1" ] && [ -n "$(find "$SCOTB_LIVE" -maxdepth 2 -name SKILL.md -print -quit 2>/dev/null)" ]; then
-    SCOTB_SRC="$SCOTB_LIVE"
-    SCOTB_TAG="live"
-fi
-SCOTB_SKILLS=()
-for d in "$SCOTB_SRC"/*/; do
+LOCAL_SKILLS=()
+for d in /opt/pi-skills/local/*/; do
     [ -f "$d/SKILL.md" ] || continue
     name="$(basename "$d")"
     if [ -e "$SKILLS_DIR/$name" ]; then
-        echo "ERROR: skill name collision: '$name' (matt vs scotb)" >&2
+        echo "ERROR: skill name collision: '$name' (matt vs local)" >&2
         exit 1
     fi
     cp -a "$d" "$SKILLS_DIR/$name"
-    SCOTB_SKILLS+=("$name")
+    LOCAL_SKILLS+=("$name")
 done
-if [ "$SCOTB_SRC" = "$SCOTB_LIVE" ]; then
-    SCOTB_SHA="$(git -C "$SCOTB_LIVE" rev-parse --short HEAD 2>/dev/null || echo '?')"
-else
-    SCOTB_SHA="$(cat /opt/pi-skills/scotb.sha 2>/dev/null || echo '?')"
-fi
-echo "scotb skills installed from $SCOTB_SRC @ $SCOTB_SHA ($SCOTB_TAG; ${#SCOTB_SKILLS[@]}: $(IFS=', '; echo "${SCOTB_SKILLS[*]}"))"
+echo "local skills installed from /opt/pi-skills/local (pi-docker repo) (${#LOCAL_SKILLS[@]}: $(IFS=', '; echo "${LOCAL_SKILLS[*]}"))"
 NPM_MANIFEST="$(jq -r 'to_entries | map(.key + "-" + .value) | join(", ")' "$NPM_BAKED/manifest.json" 2>/dev/null || echo '?')"
 echo "baked npm extensions installed from $NPM_BAKED @ $NPM_MANIFEST"
 echo "pi-lean-ctx installed from $NPM_BAKED/node_modules/pi-lean-ctx (state saved/restored); binary @ $(cat /opt/pi-extensions/lean-ctx.version 2>/dev/null || echo '?')"

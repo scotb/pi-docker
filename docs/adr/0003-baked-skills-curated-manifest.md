@@ -15,7 +15,7 @@ start); hand-dropped skills are ephemeral by design. Two sources:
 | Source | Pin | Extraction |
 |---|---|---|
 | mattpocock/skills (upstream) | git SHA, cloned at build | curated by `skills-manifest.txt` (fail-fast) |
-| scotb/skills (own repo) | git SHA, cloned at build | whole repo, flattened at install |
+| `skills/` (this repo) | repo commit (like tdd-ledger) | copied as-is |
 
 The **skill manifest** is a curated, dependency-closed list: one skill path
 per line, and a listed path missing at the pinned SHA **fails the build**
@@ -25,13 +25,14 @@ hands the operator the exact SHA where the selection stopped matching,
 which is the starting point of the recovery workflow (pin `MATT_SKILLS_HASH`
 to the prior tip, re-curate the list).
 
-`scotb/skills` doubles as the archive for the in-house skills, which
-previously existed only on the volume. New skills are drafted in the
-`pi-hermes-memory` drafting area and promoted by copy → commit → rebuild.
-
-`--dev` live-mounts only `scotb/skills` (the repo the operator iterates
-on); mattpocock/skills is upstream and gets no live mount — the curation
-lever (the manifest) already lives in the pi-docker repo.
+First-party skills live in `skills/` in this repo —
+the same pattern as tdd-ledger — because a skill is a promise about its
+environment, and this repo *is* the environment (tdd-ledger, the
+`.scratch` issue-tracker conventions, the forks). Live iteration happens
+in the `pi-hermes-memory` drafting area (no live mount needed); promotion
+is copy → `skills/` → commit → rebuild. mattpocock/skills is
+upstream and gets no live mount — the curation lever (the manifest)
+already lives in the pi-docker repo.
 
 ## Considered options
 
@@ -48,6 +49,11 @@ lever (the manifest) already lives in the pi-docker repo.
 - **Build from a fork of mattpocock/skills** — rejected: the fork's only job
   was preservation, which the image now does; a fork as build source would
   be a second source of truth drifting from upstream.
+- **Standalone in-house skills repo (scotb/skills)** — rejected
+  (amendment 2026-10-17): a skill is a promise about its environment;
+  splitting the skill from the environment it presumes (tdd-ledger, the
+  issue-tracker conventions) split a coherent unit across two repos.
+  First-party skills are vendored in this repo instead.
 - **Auto-detect skill dependencies** — rejected: overkill for a hand-curated
   list; the curator owns the closure.
 

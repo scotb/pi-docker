@@ -18,14 +18,13 @@
 #                derived from the version). Defaults: v3.11.4 + its official
 #                sha256. The build fails if the download does not match.
 #                The npm extension packages are pinned by the committed
-#                vendor/extension-lock lockfile, not by build args.
+#                extensions/extension-lock lockfile, not by build args.
 #   MATT_SKILLS_URL / MATT_SKILLS_HASH
 #                mattpocock/skills upstream; pin the 'main' branch tip.
 #                Skills are extracted per skills-manifest.txt (ADR-0003);
 #                the build fails if a listed skill is missing at the SHA.
-#   SCOTB_SKILLS_URL / SCOTB_SKILLS_HASH
-#                scotb/skills — the in-house skills repo; pinned 'main' tip,
-#                baked whole.
+#                First-party skills live in skills/ (no build arg — they
+#                ship with this repo, like extensions/tdd-ledger).
 #   TDD_LEDGER_SHA
 #                This repo's own commit, recorded for tdd-ledger provenance
 #                (./build.sh passes it automatically).
@@ -216,14 +215,14 @@ RUN git clone --depth 1 "${PI_SUBAGENTS_URL}" /tmp/pi-subagents \
 
 # Upstream extensions baked from the committed lockfile (ADR-0002).
 # The lockfile IS the pin: to upgrade an extension, bump the version in
-# vendor/extension-lock/package.json, regenerate package-lock.json, and
+# extensions/extension-lock/package.json, regenerate package-lock.json, and
 # rebuild. --ignore-scripts: the published tarballs are prebuilt (verified),
 # so no lifecycle scripts run — no network, no compile, deterministic.
 # The WHOLE node_modules tree is staged (npm hoists deps to the tree root);
 # the entrypoint installs each package directory alongside node_modules
 # under ~/.pi/agent/extensions/ so pi auto-discovers the packages and Node
 # resolves their hoisted deps by walking up.
-COPY vendor/extension-lock /tmp/ext-lock
+COPY extensions/extension-lock /tmp/ext-lock
 RUN cd /tmp/ext-lock \
     && npm ci --ignore-scripts \
     && mkdir -p /opt/pi-extensions/npm \
@@ -246,7 +245,7 @@ RUN curl -fsSL -o /tmp/lean-ctx.tar.gz \
 
 # tdd-ledger — vendored in this repo (no upstream; the repo is the source
 # of truth). Provenance = this repo's own commit.
-COPY vendor/tdd-ledger /opt/pi-extensions/tdd-ledger
+COPY extensions/tdd-ledger /opt/pi-extensions/tdd-ledger
 ARG TDD_LEDGER_SHA=
 RUN if [ -n "${TDD_LEDGER_SHA}" ]; then \
         echo "${TDD_LEDGER_SHA}" > /opt/pi-extensions/tdd-ledger.sha; \
@@ -255,21 +254,21 @@ RUN if [ -n "${TDD_LEDGER_SHA}" ]; then \
 # ── Baked skills (ADR-0003) ─────────────────────────────────────────────────
 # Skills are prompt artifacts (a SKILL.md directory), staged into
 # /opt/pi-skills/ and installed into ~/.pi/agent/skills/ by the entrypoint
-# on every start. Two sources, both git-SHA-pinned:
-#   mattpocock/skills — upstream; extracted per skills-manifest.txt. The
-#                       manifest is a curated dependency closure; a listed
-#                       path missing at the pinned SHA FAILS the build (no
-#                       silently degraded images — same fail-fast as the
-#                       empty-SHA check above).
-#   scotb/skills      — in-house; baked whole and flattened at install time
-#                       (the repo IS the curation).
+# on every start. Two sources:
+#   mattpocock/skills — third-party, git-SHA-pinned; extracted per
+#                       skills-manifest.txt. The manifest is a curated
+#                       dependency closure; a listed path missing at the
+#                       pinned SHA FAILS the build (no silently degraded
+#                       images — same fail-fast as the empty-SHA check
+#                       above).
+#   skills/           — first-party, in this repo (like
+#                       extensions/tdd-ledger); copied as-is, pinned to
+#                       this repo's own commit.
 ARG MATT_SKILLS_URL=https://github.com/mattpocock/skills
 ARG MATT_SKILLS_HASH=
-ARG SCOTB_SKILLS_URL=https://github.com/scotb/skills
-ARG SCOTB_SKILLS_HASH=
 
-RUN if [ -z "${MATT_SKILLS_HASH}" ] || [ -z "${SCOTB_SKILLS_HASH}" ]; then \
-        echo "ERROR: MATT_SKILLS_HASH / SCOTB_SKILLS_HASH are required — run ./build.sh" >&2; \
+RUN if [ -z "${MATT_SKILLS_HASH}" ]; then \
+        echo "ERROR: MATT_SKILLS_HASH is required — run ./build.sh" >&2; \
         exit 1; \
     fi
 
@@ -299,18 +298,11 @@ RUN git clone --depth 1 "${MATT_SKILLS_URL}" /tmp/matt-skills \
            cp -a "$src" "/opt/pi-skills/mattpocock/$name"; \
        done < /tmp/skills-manifest.txt \
     && git -C /tmp/matt-skills rev-parse HEAD > /opt/pi-skills/mattpocock.sha \
-    && git clone --depth 1 "${SCOTB_SKILLS_URL}" /tmp/scotb-skills \
-    && cd /tmp/scotb-skills \
-    && if [ "$(git rev-parse HEAD)" != "${SCOTB_SKILLS_HASH}" ]; then \
-           git fetch --depth 1 origin "${SCOTB_SKILLS_HASH}" \
-               || (echo "ERROR: commit ${SCOTB_SKILLS_HASH} not found"; exit 1); \
-           git checkout "${SCOTB_SKILLS_HASH}" \
-               || (echo "ERROR: cannot checkout ${SCOTB_SKILLS_HASH}"; exit 1); \
-       fi \
-    && mkdir -p /opt/pi-skills/scotb \
-    && cp -a /tmp/scotb-skills /opt/pi-skills/scotb/skills \
-    && git -C /tmp/scotb-skills rev-parse HEAD > /opt/pi-skills/scotb.sha \
-    && rm -rf /tmp/matt-skills /tmp/scotb-skills /tmp/skills-manifest.txt
+    && rm -rf /tmp/matt-skills /tmp/skills-manifest.txt
+
+# First-party skills: vendored in this repo (same pattern as tdd-ledger),
+# pinned to this repo's own commit — no build arg needed.
+COPY skills /opt/pi-skills/local
 
 # Chown the paths staged in this section (the fork block above chowned its own).
 RUN chown -R ubuntu:ubuntu /opt/pi-extensions/npm /opt/pi-extensions/lean-ctx \
