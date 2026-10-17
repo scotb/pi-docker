@@ -31,6 +31,12 @@ _Avoid_: overlay install
 The line the entrypoint prints at startup recording each installed extension's source and pinned version, so the running code is always auditable.
 _Avoid_: install log
 
+## Skills
+
+- **Baked skill** — a skill (a `SKILL.md` directory) staged into `/opt/pi-skills/` at image build time, pinned to an exact version, and installed into `~/.pi/agent/skills/` by the entrypoint on every container start. The image owns skill code; the volume owns state. The entrypoint reinstalls the directory from the image on every start — hand-dropped skills are ephemeral by design.
+- **Skill manifest** — `skills-manifest.txt` at the repo root; the curated, dependency-closed list of skills extracted from the upstream mattpocock/skills repo at build time. A listed path missing at the pinned SHA fails the build (fail-fast; pin to a prior tip to keep building). _Avoid_: skill allowlist, skill whitelist
+- **Drafting area** — `~/.pi/agent/pi-hermes-memory/skills/` on the state volume, where the `skill_manage` tool writes new global skills. Promotion to the baked set = copy into `scotb/skills`, commit, rebuild the image.
+
 ## Roles in this environment
 
 - **Orchestrator** — the long-running `lead` session (thinking=med) using the `orchestrate` skill; coordinates subagents and acts as final gatekeeper/reviewer. Primary context-overflow risk.

@@ -19,6 +19,13 @@
 #                sha256. The build fails if the download does not match.
 #                The npm extension packages are pinned by the committed
 #                vendor/extension-lock lockfile, not by build args.
+#   MATT_SKILLS_URL / MATT_SKILLS_HASH
+#                mattpocock/skills upstream; pin the 'main' branch tip.
+#                Skills are extracted per skills-manifest.txt (ADR-0003);
+#                the build fails if a listed skill is missing at the SHA.
+#   SCOTB_SKILLS_URL / SCOTB_SKILLS_HASH
+#                scotb/skills — the in-house skills repo; pinned 'main' tip,
+#                baked whole.
 #   TDD_LEDGER_SHA
 #                This repo's own commit, recorded for tdd-ledger provenance
 #                (./build.sh passes it automatically).
@@ -245,9 +252,70 @@ RUN if [ -n "${TDD_LEDGER_SHA}" ]; then \
         echo "${TDD_LEDGER_SHA}" > /opt/pi-extensions/tdd-ledger.sha; \
     fi
 
+# ── Baked skills (ADR-0003) ─────────────────────────────────────────────────
+# Skills are prompt artifacts (a SKILL.md directory), staged into
+# /opt/pi-skills/ and installed into ~/.pi/agent/skills/ by the entrypoint
+# on every start. Two sources, both git-SHA-pinned:
+#   mattpocock/skills — upstream; extracted per skills-manifest.txt. The
+#                       manifest is a curated dependency closure; a listed
+#                       path missing at the pinned SHA FAILS the build (no
+#                       silently degraded images — same fail-fast as the
+#                       empty-SHA check above).
+#   scotb/skills      — in-house; baked whole and flattened at install time
+#                       (the repo IS the curation).
+ARG MATT_SKILLS_URL=https://github.com/mattpocock/skills
+ARG MATT_SKILLS_HASH=
+ARG SCOTB_SKILLS_URL=https://github.com/scotb/skills
+ARG SCOTB_SKILLS_HASH=
+
+RUN if [ -z "${MATT_SKILLS_HASH}" ] || [ -z "${SCOTB_SKILLS_HASH}" ]; then \
+        echo "ERROR: MATT_SKILLS_HASH / SCOTB_SKILLS_HASH are required — run ./build.sh" >&2; \
+        exit 1; \
+    fi
+
+COPY skills-manifest.txt /tmp/skills-manifest.txt
+RUN git clone --depth 1 "${MATT_SKILLS_URL}" /tmp/matt-skills \
+    && cd /tmp/matt-skills \
+    && if [ "$(git rev-parse HEAD)" != "${MATT_SKILLS_HASH}" ]; then \
+           git fetch --depth 1 origin "${MATT_SKILLS_HASH}" \
+               || (echo "ERROR: commit ${MATT_SKILLS_HASH} not found"; exit 1); \
+           git checkout "${MATT_SKILLS_HASH}" \
+               || (echo "ERROR: cannot checkout ${MATT_SKILLS_HASH}"; exit 1); \
+       fi \
+    && mkdir -p /opt/pi-skills/mattpocock \
+    && while IFS= read -r skill; do \
+           case "$skill" in \#*|'') continue ;; esac; \
+           src="/tmp/matt-skills/skills/$skill"; \
+           if [ ! -f "$src/SKILL.md" ]; then \
+               echo "ERROR: skill '$skill' not found in matt-skills @ ${MATT_SKILLS_HASH}" >&2; \
+               echo "       pin MATT_SKILLS_HASH to a prior tip, or update skills-manifest.txt" >&2; \
+               exit 1; \
+           fi; \
+           name="$(basename "$skill")"; \
+           if [ -e "/opt/pi-skills/mattpocock/$name" ]; then \
+               echo "ERROR: skill name collision in manifest: '$name'" >&2; \
+               exit 1; \
+           fi; \
+           cp -a "$src" "/opt/pi-skills/mattpocock/$name"; \
+       done < /tmp/skills-manifest.txt \
+    && git -C /tmp/matt-skills rev-parse HEAD > /opt/pi-skills/mattpocock.sha \
+    && git clone --depth 1 "${SCOTB_SKILLS_URL}" /tmp/scotb-skills \
+    && cd /tmp/scotb-skills \
+    && if [ "$(git rev-parse HEAD)" != "${SCOTB_SKILLS_HASH}" ]; then \
+           git fetch --depth 1 origin "${SCOTB_SKILLS_HASH}" \
+               || (echo "ERROR: commit ${SCOTB_SKILLS_HASH} not found"; exit 1); \
+           git checkout "${SCOTB_SKILLS_HASH}" \
+               || (echo "ERROR: cannot checkout ${SCOTB_SKILLS_HASH}"; exit 1); \
+       fi \
+    && mkdir -p /opt/pi-skills/scotb \
+    && cp -a /tmp/scotb-skills /opt/pi-skills/scotb/skills \
+    && git -C /tmp/scotb-skills rev-parse HEAD > /opt/pi-skills/scotb.sha \
+    && rm -rf /tmp/matt-skills /tmp/scotb-skills /tmp/skills-manifest.txt
+
 # Chown the paths staged in this section (the fork block above chowned its own).
 RUN chown -R ubuntu:ubuntu /opt/pi-extensions/npm /opt/pi-extensions/lean-ctx \
-    /opt/pi-extensions/tdd-ledger /opt/pi-extensions/lean-ctx.version
+    /opt/pi-extensions/tdd-ledger /opt/pi-extensions/lean-ctx.version \
+    /opt/pi-skills
 
 USER ubuntu
 

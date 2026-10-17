@@ -26,6 +26,9 @@
 #                   Dockerfile's manifest jq line + the entrypoint's install loop.
 #   local code    — vendor the file(s) under vendor/<name>/, COPY them in the
 #                   Dockerfile, and add an install block in entrypoint.sh.
+#   skills        — add a REPOS row (git SHA pin) + a clone block in the
+#                   Dockerfile; curate upstream skills via skills-manifest.txt
+#                   (ADR-0003).
 set -euo pipefail
 
 cd "$(dirname "$0")"
@@ -46,6 +49,8 @@ REPOS=(
     "pi|https://github.com/earendil-works/pi|main|PI_HASH|FORK"
     "pi-subagents|https://github.com/scotb/pi-subagents|self-compact|PI_SUBAGENTS_HASH|PI_SUBAGENTS"
     "self-compact|https://github.com/scotb/self-compact-pi-agent|deploy|SELF_COMPACT_HASH|SELF_COMPACT"
+    "matt-skills|https://github.com/mattpocock/skills|main|MATT_SKILLS_HASH|MATT_SKILLS"
+    "scotb-skills|https://github.com/scotb/skills|main|SCOTB_SKILLS_HASH|SCOTB_SKILLS"
 )
 
 args=()

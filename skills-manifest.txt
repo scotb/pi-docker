@@ -1,0 +1,52 @@
+# Curated selection from mattpocock/skills (ADR-0003).
+#
+# One skill path per line, relative to the repo's skills/ directory.
+# The build FAILS if a listed path does not exist at the pinned SHA —
+# pin MATT_SKILLS_HASH to a prior tip, or update this list to match
+# upstream's new layout.
+#
+# The list is a DEPENDENCY CLOSURE: skills referenced by name from a
+# listed skill must be listed too (e.g. grill-with-docs -> grilling,
+# domain-modeling).
+#
+# Deliberate exclusions: in-progress/* (experimental), deprecated/*
+# (fragile pin targets), engineering/ask-matt (router over the full
+# repo — would route to skills not baked here),
+# misc/git-guardrails-claude-code (Claude Code-specific),
+# misc/migrate-to-shoehorn (one-off migration), misc/scaffold-exercises,
+# personal/edit-article (prose writing),
+# productivity/to-questionnaire (solo environment; grilling covers
+# interviews), productivity/wait-what (stylistic nice-to-have),
+# engineering/resolving-merge-conflicts (deleted upstream, 2026-10 tip),
+# personal/obsidian-vault (deleted upstream; vault not in regular use).
+
+# engineering
+engineering/code-review
+engineering/codebase-design
+engineering/diagnosing-bugs
+engineering/domain-modeling
+engineering/grill-with-docs
+engineering/implement
+engineering/implement-spec
+engineering/improve-codebase-architecture
+engineering/pr
+engineering/prototype
+engineering/retro
+engineering/research
+engineering/setup-matt-pocock-skills
+engineering/tdd
+engineering/to-spec
+engineering/to-tickets
+engineering/triage
+engineering/wayfinder
+engineering/wizard
+
+# productivity
+productivity/grill-me
+productivity/grilling
+productivity/handoff
+productivity/teach
+productivity/writing-for-agents
+
+# misc
+misc/setup-pre-commit

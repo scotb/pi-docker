@@ -31,9 +31,10 @@ if [[ "$project" == "/" || "$project" == "$HOME" ]]; then
   exit 1
 fi
 
-# --dev: also mount the extension fork repos from their home on the host
-# (/data/apps), so the entrypoint's live-fork override takes effect while
-# developing pi-docker. The flag is consumed here and never passed to pi.
+# --dev: also mount the extension fork repos and the skills repo from their
+# home on the host (/data/apps), so the entrypoint's live-fork override takes
+# effect while developing pi-docker. The flag is consumed here and never
+# passed to pi.
 # --tag <tag>: run pi-sandbox:<tag> instead of pi-sandbox:latest, so a dated
 # build can be targeted without retagging it. A bare tag gets the pi-sandbox:
 # prefix; a tag containing ':' is used verbatim. Consumed here, never pi's.
@@ -67,6 +68,7 @@ if [[ "$dev" == 1 ]]; then
     mounts+=(
         -v "/data/apps/pi-subagents:/host/data/apps/pi-subagents"
         -v "/data/apps/self-compact-pi-agent:/host/data/apps/self-compact-pi-agent"
+        -v "/data/apps/skills:/host/data/apps/skills"
     )
 fi
 
