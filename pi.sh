@@ -34,14 +34,24 @@ fi
 # --dev: also mount the extension fork repos from their home on the host
 # (/data/apps), so the entrypoint's live-fork override takes effect while
 # developing pi-docker. The flag is consumed here and never passed to pi.
+# --tag <tag>: run pi-sandbox:<tag> instead of pi-sandbox:latest, so a dated
+# build can be targeted without retagging it. A bare tag gets the pi-sandbox:
+# prefix; a tag containing ':' is used verbatim. Consumed here, never pi's.
 dev=0
+image_tag="latest"
 args=()
-for arg in "$@"; do
-    case "$arg" in
-        --dev) dev=1 ;;
-        *) args+=("$arg") ;;
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --dev) dev=1; shift ;;
+        --tag)
+            [[ $# -ge 2 ]] || { echo "pi: --tag requires a value" >&2; exit 1; }
+            image_tag="$2"; shift 2 ;;
+        *) args+=("$1"); shift ;;
     esac
 done
+if [[ "$image_tag" != *:* ]]; then
+    image_tag="pi-sandbox:$image_tag"
+fi
 
 # Agent state lives in a named volume, not a host bind mount: the image
 # owns code, the volume owns state. To run against a different state
@@ -65,4 +75,4 @@ docker run -it --rm \
         "${mounts[@]}" \
         "${envs[@]}" \
         -w "/host$project" \
-        pi-sandbox:latest ${args[@]+"${args[@]}"}
+        "$image_tag" ${args[@]+"${args[@]}"}

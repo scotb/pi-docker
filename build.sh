@@ -14,6 +14,9 @@
 #   GIT_USER_NAME="S" GIT_USER_EMAIL="s@x" ./build.sh
 #   ./build.sh --tag pi-sandbox:1.3.0 --tag pi-sandbox:2026-10-15
 #     (--tag is repeatable; pi-sandbox:latest is always tagged)
+#   ./build.sh --no-cache
+#     (everything besides --tag is passed to docker build verbatim:
+#      --no-cache, --build-arg, --progress=plain, --cache-from, --platform, …)
 #
 # Adding a baked extension:
 #   git fork      — add a row to REPOS below and a matching clone block in
@@ -28,10 +31,13 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 TAGS=("pi-sandbox:latest")
+pass=()  # unrecognized args, forwarded to docker build verbatim
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --tag) TAGS+=("$2"); shift 2 ;;
-        *) echo "unknown arg: $1 (use --tag, repeatable)" >&2; exit 1 ;;
+        --tag)
+            [[ $# -ge 2 ]] || { echo "build.sh: --tag requires a value" >&2; exit 1; }
+            TAGS+=("$2"); shift 2 ;;
+        *) pass+=("$1"); shift ;;
     esac
 done
 
@@ -73,4 +79,4 @@ tag_args=()
 for t in "${TAGS[@]}"; do
     tag_args+=(-t "$t")
 done
-docker build --no-cache "${args[@]}" "${tag_args[@]}" -f Dockerfile .
+docker build "${pass[@]+"${pass[@]}"}" "${args[@]}" "${tag_args[@]}" -f Dockerfile .

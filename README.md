@@ -19,6 +19,9 @@ PI_SUBAGENTS_HASH=a85db042... ./build.sh       # pin one repo to a commit
 PI_URL=https://github.com/you/pi ./build.sh    # point pi at a fork
 ./build.sh --tag pi-sandbox:1.3.0 --tag pi-sandbox:2026-10-15
 #   ^ --tag is repeatable; pi-sandbox:latest is always tagged too
+./build.sh --no-cache
+#   ^ everything besides --tag is passed to docker build verbatim
+#     (--no-cache, --build-arg, --progress=plain, --cache-from, …)
 ```
 
 The Dockerfile **refuses to build** with empty extension hashes, so a plain
@@ -120,6 +123,13 @@ Add `--dev` to mount the live extension forks from `~/data/apps` — the entrypo
 
 ```bash
 pi --dev
+```
+
+Run against a specific image tag instead of `pi-sandbox:latest` — useful for
+verifying a dated build before it becomes `latest`:
+
+```bash
+pi --tag 2026-10-15
 ```
 
 ### Run commands directly
