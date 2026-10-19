@@ -144,6 +144,7 @@ NPM_MANIFEST="$(jq -r 'to_entries | map(.key + "-" + .value) | join(", ")' "$NPM
 echo "baked npm extensions installed from $NPM_BAKED @ $NPM_MANIFEST"
 echo "pi-lean-ctx installed from $NPM_BAKED/node_modules/pi-lean-ctx (state saved/restored); binary @ $(cat /opt/pi-extensions/lean-ctx.version 2>/dev/null || echo '?')"
 echo "tdd-ledger installed from /opt/pi-extensions/tdd-ledger @ $(cat /opt/pi-extensions/tdd-ledger.sha 2>/dev/null || echo '?') (pi-docker repo)"
+echo "docs baked at /opt/docs @ $(cat /opt/docs.sha 2>/dev/null || echo '?') (pi-docker repo)"
 echo "pi installed at /opt/pi @ $(cat /opt/pi.sha 2>/dev/null || echo '?')"
 
 exec node /opt/pi/packages/coding-agent/dist/cli.js "$@"

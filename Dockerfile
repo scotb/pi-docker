@@ -304,10 +304,18 @@ RUN git clone --depth 1 "${MATT_SKILLS_URL}" /tmp/matt-skills \
 # pinned to this repo's own commit — no build arg needed.
 COPY skills /opt/pi-skills/local
 
+# Baked docs: this repo's docs/ (ADRs, agent conventions, integration spec),
+# pinned to this repo's own commit — the rationale is readable from any
+# session, not just when the pi-docker repo is mounted.
+COPY docs /opt/docs
+RUN if [ -n "${TDD_LEDGER_SHA}" ]; then \
+        echo "${TDD_LEDGER_SHA}" > /opt/docs.sha; \
+    fi
+
 # Chown the paths staged in this section (the fork block above chowned its own).
 RUN chown -R ubuntu:ubuntu /opt/pi-extensions/npm /opt/pi-extensions/lean-ctx \
     /opt/pi-extensions/tdd-ledger /opt/pi-extensions/lean-ctx.version \
-    /opt/pi-skills
+    /opt/pi-skills /opt/docs
 
 USER ubuntu
 

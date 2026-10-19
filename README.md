@@ -249,6 +249,7 @@ Delete the script once the carryover is done.
 ### Pi
 - **Pi CLI**: built from source with plain `npm run build` (no Bun) and shipped to `/opt/pi/`; the entrypoint runs it as `node /opt/pi/packages/coding-agent/dist/cli.js`
 - **Agent Tools**: `lean-ctx` (baked at a pinned version)
+- **Baked docs**: this repo's `docs/` at `/opt/docs/` (ADRs, agent conventions, integration spec) — pinned to the repo commit, so the environment's rationale is readable from any session; the `environment` skill is the map onto it
 - **llama-swap**: NOT configured in the image — provided by the host-mounted `~/.pi/agent/models.json`
 
 ## Building from a fork
