@@ -1,7 +1,7 @@
 ---
 name: "environment"
 description: "How the pi-sandbox container is constructed and operated: image owns code, volume owns state; baked vs staging area vs drafting area; pinning, rebuild, rollback, skill promotion, `--dev`, volume recovery. Use when asked how the environment is built, where something lives, how to update it, or when a skill/extension seems to have vanished."
-version: 1.0.1
+version: 1.0.2
 created: "2026-10-19"
 updated: "2026-10-20"
 ---
@@ -20,7 +20,7 @@ Use when asked how this environment is constructed, where something lives (skill
 - `/opt/pi-extensions` — **staging area** for extensions: `pi-subagents/` + `self-compact/` (git-SHA-pinned forks), `npm/` (upstream packages from the committed lockfile + hoisted `node_modules` + `manifest.json`), `lean-ctx/` (pinned native binary, sha256-verified), `tdd-ledger/` (vendored — this repo is the source of truth)
 - `/opt/pi-skills` — **staging area** for skills: `mattpocock/` (upstream, curated by `skills-manifest.txt`, SHA-pinned) + `local/` (first-party, from this repo's `skills/`)
 - `/opt/docs` — this repo's `docs/` baked in: ADRs, agent conventions, integration spec
-- `/opt/playwright-browsers` — headless Chromium; `/usr/local/bin/page-shot` — URL→PNG renderer
+- `/opt/playwright-browsers` — headless Chromium; `/usr/local/bin/page-shot` — URL→PNG renderer (`page-shot <url> <out.png>`; capture is available to every model, viewing the PNG requires vision)
 
 **Volume `pi-state` (`~/.pi`, volume-owned):**
 - `agent/extensions/` — installed extensions (reinstalled from staging on every start)
@@ -28,6 +28,7 @@ Use when asked how this environment is constructed, where something lives (skill
 - `agent/pi-hermes-memory/` — **drafting area** (`skills/` is where `skill_manage` writes new global skills) + cross-session memory store
 - `agent/projects-memory/` — per-project memory
 - `agent/models.json` — llama-swap endpoints/models (host-provided config; never baked)
+- **Model capabilities (host-provided — change with model swaps):** as of 2026-10 the lead and coder models are vision-capable (can view PNGs/screenshots); the reviewer model is not. Screenshots are first-class proof-of-work for lead/coder.
 - `agent/web-search-cache/`, `tdd-ledger/` state, `~/.pi/lean-ctx` data dir, sessions, settings
 
 **Live mounts (host):**
