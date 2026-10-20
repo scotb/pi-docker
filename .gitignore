@@ -1,3 +1,5 @@
+# Local issue/working state (docs/agents/issue-tracker.md)
+.scratch/
 # Pi sub-agents runtime data (artifacts, missions, etc.)
 .pi-subagents/
 node_modules
