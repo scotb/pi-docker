@@ -1,9 +1,9 @@
 ---
 name: "pi-subagents-workflow"
 description: "Correct patterns for using pi-subagents on a local shared-inference setup: native async wake (no manual wait arming), 30-minute default timeout with check-in/resume/takeover, fresh-context worker children, parent-sleep discipline, KV-cache model routing. Use when launching subagents, managing child runs, or a child times out, spins, or goes silent."
-version: 2
+version: 1.0.2
 created: "2026-08-10"
-updated: "2026-10-19"
+updated: "2026-10-20"
 ---
 ## When to Use
 When launching any subagent, managing subagent workflows, or a child times out, spins, or goes silent. Current policy (2026-10-18): native async wake (manual subagent_wait arming is obsolete), 30-minute default timeout with check-in/resume/takeover, fresh-context worker children, and parent-sleep discipline on shared local inference.

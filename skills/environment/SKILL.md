@@ -1,9 +1,9 @@
 ---
 name: "environment"
 description: "How the pi-sandbox container is constructed and operated: image owns code, volume owns state; baked vs staging area vs drafting area; pinning, rebuild, rollback, skill promotion, `--dev`, volume recovery. Use when asked how the environment is built, where something lives, how to update it, or when a skill/extension seems to have vanished."
-version: 1
+version: 1.0.1
 created: "2026-10-19"
-updated: "2026-10-19"
+updated: "2026-10-20"
 ---
 ## When to Use
 Use when asked how this environment is constructed, where something lives (skills, extensions, state, models), why something vanished after a rebuild or container start, or how to update the environment (promote a skill, bump a pin, rebuild, roll back, swap volumes). This is a map of the environment, not a task procedure — read it, then act.
