@@ -1,7 +1,7 @@
 ---
 name: "environment"
 description: "How the pi-sandbox container is constructed and operated: image owns code, volume owns state; baked vs staging area vs drafting area; pinning, rebuild, rollback, skill promotion, `--dev`, volume recovery. Use when asked how the environment is built, where something lives, how to update it, or when a skill/extension seems to have vanished."
-version: 1.0.2
+version: 1.0.3
 created: "2026-10-19"
 updated: "2026-10-20"
 ---
@@ -33,7 +33,7 @@ Use when asked how this environment is constructed, where something lives (skill
 
 **Live mounts (host):**
 - current project → `/host/<path>` (one Pi identity per project directory)
-- `~/data/apps/{pi-subagents,self-compact-pi-agent}` — live extension forks, used **only** with `pi --dev`
+- `/data/apps/{pi-subagents,self-compact-pi-agent}` — live extension forks on the host, used **only** with `pi --dev`
 
 ## Names (canonical — full glossary in the pi-docker repo's `CONTEXT.md`)
 - **baked** — staged into the image at build time, pinned, reinstalled by the entrypoint on every start (extensions, skills, docs, binaries)
@@ -58,7 +58,7 @@ An upgrade is a deliberate event: bump the pin → `./build.sh --tag pi-sandbox:
 ## Operations
 - **Promote a skill**: iterate in the drafting area → copy into `skills/<name>/` in the pi-docker repo → commit → rebuild. Once promoted, delete the draft from the drafting area or it gets advertised twice.
 - **Rebuild / roll back**: date-tagged builds; run an older tag to roll back (`pi --tag 2026-10-15`). `latest` is always tagged too.
-- **`--dev`**: mounts the live extension forks from `~/data/apps`; the entrypoint installs from there instead of the image-baked copies (for iterating on the forks).
+- **`--dev`**: mounts the live extension forks from the host's `/data/apps` (must exist there); the entrypoint installs from them instead of the image-baked copies (for iterating on the forks).
 - **Volume recovery**: `PI_VOLUME=<name> pi` — volumes coexist and nothing is deleted; a fresh start is a new volume name, a rollback is the old one.
 
 ## Rationale

@@ -47,7 +47,7 @@ The Dockerfile **refuses to build** with empty extension hashes, so a plain
 > not by build args — bump the version in `extensions/extension-lock/package.json`,
 > regenerate the lockfile, rebuild (ADR-0002).
 
-> **Recommended workflow:** build once per week with `./build.sh --tag pi-sandbox:$(date +%F)`, adding a version tag as needed (`--tag` is repeatable, e.g. `--tag pi-sandbox:1.3.0`); `pi-sandbox:latest` is always tagged. Roll back by running a previous date tag.
+> **Recommended workflow:** build once per week with `./build.sh --tag pi-sandbox:$(date +%F)`, adding a version tag as needed (`--tag` is repeatable, e.g. `--tag pi-sandbox:1.3.0`); `pi-sandbox:latest` is always tagged. Roll back by running a previous date tag (`pi --tag <date>`).
 
 ### Local git identity (optional)
 
@@ -57,10 +57,7 @@ name and email as build args. Only the author identity is written (to
 push/pull are done manually on the host.
 
 ```bash
-docker build \
-  --build-arg GIT_USER_NAME="Your Name" \
-  --build-arg GIT_USER_EMAIL="you@example.com" \
-  -t pi-sandbox .
+GIT_USER_NAME="Your Name" GIT_USER_EMAIL="you@example.com" ./build.sh
 ```
 
 ## Weekly Build Workflow
@@ -72,7 +69,7 @@ docker build \
 Date tags make roll-back trivial — run an older tag:
 
 ```bash
-docker run -it --rm pi-sandbox:2026-10-08
+pi --tag 2026-10-08
 ```
 
 Common operations:
@@ -121,7 +118,7 @@ pi
 
 Starts an interactive Pi session with the current directory mounted at `/host/<path>` inside the container. Each project gets its own identity — separate session history, trust decisions, and settings.
 
-Add `--dev` to mount the live extension forks from `~/data/apps` — the entrypoint then installs extensions from there instead of the image-baked copies (for iterating on the forks):
+Add `--dev` to mount the live extension forks — the entrypoint then installs extensions from them instead of the image-baked copies (for iterating on the forks). The forks must exist on the host at `/data/apps` (`pi-subagents`, `self-compact-pi-agent`); they are mounted at `/host/data/apps/...`:
 
 ```bash
 pi --dev
@@ -190,22 +187,16 @@ The npm dependency tree is staged whole into the image
 directory under `~/.pi/agent/extensions/` (Node resolves hoisted deps by walking
 up; pi's discovery skips `node_modules`).
 
-**One-time state carryover:** agent state lives in the named volume
-`pi-state`, not a host bind mount. The one-time carryover of the pre-volume
-host `~/.pi` into that volume is a one-and-done host script kept OUT of this
-repo — `~/.pi/carryover-to-volume.sh`, run on the host while no pi container
-is running:
+### Baked skills (bundled)
 
-```bash
-~/.pi/carryover-to-volume.sh --dry-run   # preview
-~/.pi/carryover-to-volume.sh             # apply
-```
+Skills are prompt artifacts (a `SKILL.md` directory), staged into the image
+and reinstalled into `~/.pi/agent/skills/` by the entrypoint at every
+container start, with a provenance line echoed (ADR-0003):
 
-It tars `~/.pi` into the volume, excluding the npm-era cruft
-(`agent/npm`, `agent/mcp.json*`, `agent/extensions`, `agent/bin`), and
-strips the `npm:` entries from the volume's `settings.json` — the host
-`~/.pi` stays untouched, so the old image keeps working as a fallback.
-Delete the script once the carryover is done.
+| Source | Stage | Notes |
+|---|---|---|
+| `skills/` (this repo) | `/opt/pi-skills/local` | First-party skills — no build arg; bump the version in the SKILL.md front matter, commit, rebuild |
+| `mattpocock/skills` | `/opt/pi-skills/mattpocock` | Third-party, git-SHA-pinned (`MATT_SKILLS_HASH`); curated per `skills-manifest.txt` |
 
 ## Volume mounts
 
@@ -213,7 +204,7 @@ Delete the script once the carryover is done.
 |---|---|---|
 | `.` (cur dir) | `/host/.` (identity) | Project files — one identity per project |
 | `pi-state` (named volume; `PI_VOLUME` to override) | `/home/ubuntu/.pi` | Pi state (sessions, settings, extensions, config) |
-| `~/data/apps/{pi-subagents,self-compact-pi-agent}` | `/host/data/apps/...` | Live extension forks — **only** with `pi --dev` |
+| `/data/apps/{pi-subagents,self-compact-pi-agent}` | `/host/data/apps/...` | Live extension forks — **only** with `pi --dev` |
 
 ## What's inside
 
@@ -271,5 +262,5 @@ llama-swap and the default model/provider are configured in
 baked into the image.
 
 If your llama-swap instance moves or changes port, update the file in the
-volume (e.g. via a one-off `docker run -v pi-state:/data`) — no rebuild is
+volume (e.g. via a one-off `docker run -v pi-state:/tmp/vol`) — no rebuild is
 required.

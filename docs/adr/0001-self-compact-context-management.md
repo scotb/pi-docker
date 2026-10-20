@@ -44,7 +44,7 @@ Adopt a custom `self-compact` extension (fork:
   branch heads to SHAs; the Dockerfile fails fast on unpinned builds).
 - The extension is source-only (jiti `.ts`); loading changes requires a
   full container restart, not `/reload`.
-- Iteration path: `pi.sh --dev` mounts the live forks from `~/data/apps`;
+- Iteration path: `pi.sh --dev` mounts the live forks from `/data/apps`;
   the entrypoint installs from them when `PI_DEV=1`.
 - Compaction behavior in children depends on *both* forks being at
   compatible revisions — they are bumped together in `build.sh`.
