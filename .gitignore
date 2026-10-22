@@ -1,3 +1,5 @@
+# Local, personal build inputs (pins, identity, secrets) — see .env.example
+.env
 # Local issue/working state (docs/agents/issue-tracker.md)
 .scratch/
 # Pi sub-agents runtime data (artifacts, missions, etc.)

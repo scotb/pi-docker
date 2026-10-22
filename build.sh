@@ -9,6 +9,8 @@
 # --build-arg values) is always required.
 #
 #   ./build.sh                                     # heads of tracked branches
+#   .env                                           # base values (git-ignored;
+#                                                    # shell environment wins)
 #   PI_SUBAGENTS_HASH=a85db042... ./build.sh       # pin one repo to a commit
 #   PI_URL=https://github.com/you/pi ./build.sh    # point pi at a fork
 #   GIT_USER_NAME="S" GIT_USER_EMAIL="s@x" ./build.sh
@@ -33,6 +35,16 @@
 set -euo pipefail
 
 cd "$(dirname "$0")"
+
+# Load .env as base values: variables already set in the environment win.
+if [ -f .env ]; then
+    while IFS= read -r line; do
+        case "$line" in ''|\#*) continue ;; esac
+        k="${line%%=*}"; v="${line#*=}"
+        k="${k#export }"; k="${k// /}"; v="${v%\"}"; v="${v#\"}"; v="${v%\'}"; v="${v#\'}"
+        [ -n "$k" ] && [ -z "${!k:-}" ] && export "$k=$v"
+    done < .env
+fi
 
 TAGS=("pi-sandbox:latest")
 pass=()  # unrecognized args, forwarded to docker build verbatim
