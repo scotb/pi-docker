@@ -6,20 +6,41 @@
       "apiKey": "none",
       "models": [
         {
-          "id": "coder (ornith)",
-          "name": "coder"
+          "id": "coder",
+          "name": "Qwen3.8-27B-GSQ-RCO-IQ3_S",
+          "contextWindow": 131072,
+          "maxTokens": 98304,
+          "reasoning": true,
+          "input": ["text", "image"]
         },
         {
           "id": "architect",
-          "name": "architect"
+          "name": "Qwen3-14B-Q6_K",
+          "contextWindow": 40960,
+          "maxTokens": 16384,
+          "reasoning": true
         },
         {
           "id": "reviewer",
-          "name": "reviewer"
+          "name": "gemma-4-31B-it-UD-IQ3_XXS",
+          "contextWindow": 110000,
+          "maxTokens": 32768,
+          "reasoning": true
+        },
+        {
+          "id": "lead",
+          "name": "Swift-1.5-Qwen3.8-27B-GSQ-RCO-IQ3_S",
+          "contextWindow": 131072,
+          "maxTokens": 98304,
+          "reasoning": true,
+          "input": ["text", "image"]
         },
         {
           "id": "researcher",
-          "name": "researcher"
+          "name": "Qwen3.6-35B-A3B-UD-IQ4_XS",
+          "contextWindow": 131072,
+          "maxTokens": 32768,
+          "reasoning": true
         }
       ]
     }
