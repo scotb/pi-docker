@@ -105,6 +105,28 @@ if [ ! -f "$LC_DST/config.json" ]; then
 }
 EOF
 fi
+# mcp.json — Pi's MCP server registry (user-level config). A fresh state
+# volume has none yet: seed the two baked craft CLIs (the image's agent
+# interfaces, rooted at /host). Never overwrite an existing file — once
+# created, the volume owns it.
+MCP_CONFIG="$HOME/.pi/agent/mcp.json"
+if [ ! -f "$MCP_CONFIG" ]; then
+    cat > "$MCP_CONFIG" <<'EOF'
+{
+  "mcpServers": {
+    "photocraft": {
+      "command": "/opt/photocraft/bin/photocraft-cli",
+      "args": ["mcp", "--automation-read-root", "/host", "--automation-write-root", "/host"]
+    },
+    "pdfcraft": {
+      "command": "/opt/pdfcraft/bin/pdfcraft-cli",
+      "args": ["mcp", "--root", "/host"]
+    }
+  }
+}
+EOF
+    echo "mcp.json seeded at $MCP_CONFIG (photocraft + pdfcraft servers, roots /host)"
+fi
 # tdd-ledger: vendored in the pi-docker repo (no upstream).
 TL_DST="$EXT_DIR/tdd-ledger"
 rm -rf "$TL_DST"
@@ -144,6 +166,8 @@ NPM_MANIFEST="$(jq -r 'to_entries | map(.key + "-" + .value) | join(", ")' "$NPM
 echo "baked npm extensions installed from $NPM_BAKED @ $NPM_MANIFEST"
 echo "pi-lean-ctx installed from $NPM_BAKED/node_modules/pi-lean-ctx (state saved/restored); binary @ $(cat /opt/pi-extensions/lean-ctx.version 2>/dev/null || echo '?')"
 echo "tdd-ledger installed from /opt/pi-extensions/tdd-ledger @ $(cat /opt/pi-extensions/tdd-ledger.sha 2>/dev/null || echo '?') (pi-docker repo)"
+echo "photocraft-cli installed from /opt/photocraft/bin @ $(cat /opt/photocraft.version 2>/dev/null || echo '?') (sha256-pinned release)"
+echo "pdfcraft-cli installed from /opt/pdfcraft/bin @ $(cat /opt/pdfcraft.version 2>/dev/null || echo '?') (sha256-pinned release)"
 echo "docs baked at /opt/docs @ $(cat /opt/docs.sha 2>/dev/null || echo '?') (pi-docker repo)"
 echo "pi installed at /opt/pi @ $(cat /opt/pi.sha 2>/dev/null || echo '?')"
 

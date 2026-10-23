@@ -157,7 +157,7 @@ RUN if [ -n "${FORK_HASH}" ]; then echo "${FORK_HASH}" > /opt/pi.sha; fi
 RUN rm -rf /opt/pi/node_modules/.cache
 
 # Set PATH to include the Pi bin directory (for lean-ctx host binaries)
-ENV PATH="/home/ubuntu/.pi/bin:${PATH}"
+ENV PATH="/opt/photocraft/bin:/opt/pdfcraft/bin:/home/ubuntu/.pi/bin:${PATH}"
 
 # The base image ships with an 'ubuntu' user at UID 1000.
 WORKDIR /workspace
@@ -243,6 +243,40 @@ RUN curl -fsSL -o /tmp/lean-ctx.tar.gz \
     && rm -f /tmp/lean-ctx.tar.gz \
     && echo "${LEAN_CTX_BIN_VERSION}" > /opt/pi-extensions/lean-ctx.version
 
+# PhotoCraft — pinned GitHub release, sha256-verified. Headless image
+# editor (ArtCraft family): stateless CLI pipelines (`run`/`batch`),
+# command discovery (`commands`), and an MCP stdio server (`mcp`). Only the
+# static CLI is baked — the desktop `photocraft` binary needs a display.
+ARG PHOTOCRAFT_VERSION=v0.13.0
+ARG PHOTOCRAFT_SHA256=baf6206b57f553576f41ccb18c6d3b12bd1f3a56933ff6775c51e551f30b9142
+RUN curl -fsSL -o /tmp/photocraft.tar.gz \
+        "https://github.com/storytold/photocraft/releases/download/${PHOTOCRAFT_VERSION}/photocraft-${PHOTOCRAFT_VERSION#v}-linux-x86_64.tar.gz" \
+    && echo "${PHOTOCRAFT_SHA256}  /tmp/photocraft.tar.gz" | sha256sum -c - \
+    && tar -xzf /tmp/photocraft.tar.gz -C /tmp \
+    && mkdir -p /opt/photocraft/bin \
+    && cp -a "/tmp/photocraft-${PHOTOCRAFT_VERSION#v}-linux-x86_64/bin/photocraft-cli" /opt/photocraft/bin/ \
+    && cp -a "/tmp/photocraft-${PHOTOCRAFT_VERSION#v}-linux-x86_64/share/doc" /opt/photocraft/doc \
+    && chmod +x /opt/photocraft/bin/photocraft-cli \
+    && rm -rf /tmp/photocraft.tar.gz "/tmp/photocraft-${PHOTOCRAFT_VERSION#v}-linux-x86_64" \
+    && echo "${PHOTOCRAFT_VERSION}" > /opt/photocraft.version
+
+# PdfCraft — pinned GitHub release, sha256-verified. Headless PDF workbench
+# (ArtCraft family): tool discovery (`tools`), one-shot runs (`run` with
+# key=value args, JSON `--script`, `--root` scoping), and an MCP stdio
+# server (`mcp --root`). Same layout as PhotoCraft; only the CLI is baked.
+ARG PDFCRAFT_VERSION=v0.13.0
+ARG PDFCRAFT_SHA256=598519ea2bc77c66ca9a906241e1fe3eccf745f50627ce3cdbd5b5e675a456d3
+RUN curl -fsSL -o /tmp/pdfcraft.tar.gz \
+        "https://github.com/storytold/pdfcraft/releases/download/${PDFCRAFT_VERSION}/pdfcraft-${PDFCRAFT_VERSION#v}-linux-x86_64.tar.gz" \
+    && echo "${PDFCRAFT_SHA256}  /tmp/pdfcraft.tar.gz" | sha256sum -c - \
+    && tar -xzf /tmp/pdfcraft.tar.gz -C /tmp \
+    && mkdir -p /opt/pdfcraft/bin \
+    && cp -a "/tmp/pdfcraft-${PDFCRAFT_VERSION#v}-linux-x86_64/bin/pdfcraft-cli" /opt/pdfcraft/bin/ \
+    && cp -a "/tmp/pdfcraft-${PDFCRAFT_VERSION#v}-linux-x86_64/share/doc" /opt/pdfcraft/doc \
+    && chmod +x /opt/pdfcraft/bin/pdfcraft-cli \
+    && rm -rf /tmp/pdfcraft.tar.gz "/tmp/pdfcraft-${PDFCRAFT_VERSION#v}-linux-x86_64" \
+    && echo "${PDFCRAFT_VERSION}" > /opt/pdfcraft.version
+
 # tdd-ledger — vendored in this repo (no upstream; the repo is the source
 # of truth). Provenance = this repo's own commit.
 COPY extensions/tdd-ledger /opt/pi-extensions/tdd-ledger
@@ -315,6 +349,7 @@ RUN if [ -n "${TDD_LEDGER_SHA}" ]; then \
 # Chown the paths staged in this section (the fork block above chowned its own).
 RUN chown -R ubuntu:ubuntu /opt/pi-extensions/npm /opt/pi-extensions/lean-ctx \
     /opt/pi-extensions/tdd-ledger /opt/pi-extensions/lean-ctx.version \
+    /opt/photocraft /opt/photocraft.version /opt/pdfcraft /opt/pdfcraft.version \
     /opt/pi-skills /opt/docs
 
 USER ubuntu

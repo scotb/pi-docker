@@ -47,6 +47,20 @@ _Avoid_: install log
 This repo's `docs/` (ADRs, agent conventions, integration spec) staged into `/opt/docs/` at image build time, pinned to this repo's commit, so the environment's rationale is readable from any session — not just when the pi-docker repo is mounted. The `environment` skill (first-party, in `skills/`) is the discoverable map onto it.
 _Avoid_: repo docs, docs volume
 
+## Craft apps (image + PDF)
+
+**Craft apps**:
+The two headless ArtCraft editors baked into the image: PhotoCraft (raster image editing — cleanup, retouch, shapes, export) and PdfCraft (PDF workbench — combine, split, page ops, forms, protection). Each is a pinned CLI release under `/opt/photocraft` and `/opt/pdfcraft` (version + sha256, on `PATH`) with an MCP server registered in `~/.pi/agent/mcp.json` (seeded on fresh volumes, rooted at `/host`). The desktop apps are not baked (they need a display).
+_Avoid_: image tools, pdf editor, ArtCraft
+
+**Craft CLI**:
+The stateless command interface of a craft app (`photocraft-cli`, `pdfcraft-cli`): one-shot pipelines (`run`/`batch`), command discovery (`commands`/`tools`), direct file I/O. Prefer the CLI for one-shot work; the MCP servers exist for stateful, iterative document work.
+_Avoid_: craft API, craft MCP
+
+**Craft MCP roots**:
+The directory restriction the craft MCP servers apply to document access (both rooted at `/host`, the live-mounted project root), scoping agent-driven document work to mounted projects. Direct CLI invocations are not restricted by the roots.
+_Avoid_: craft sandbox, mount root
+
 ## Roles in this environment
 
 - **Orchestrator** — the long-running `lead` session (thinking=med) using the `orchestrate` skill; coordinates subagents and acts as final gatekeeper/reviewer. Primary context-overflow risk.

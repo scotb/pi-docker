@@ -1,15 +1,15 @@
 ---
 name: "environment"
 description: "How the pi-sandbox container is constructed and operated: image owns code, volume owns state; baked vs staging area vs drafting area; pinning, rebuild, rollback, skill promotion, `--dev`, volume recovery. Use when asked how the environment is built, where something lives, how to update it, or when a skill/extension seems to have vanished."
-version: 1.0.4
+version: 1.0.5
 created: "2026-10-19"
-updated: "2026-10-20"
+updated: "2026-10-23"
 ---
 ## When to Use
 Use when asked how this environment is constructed, where something lives (skills, extensions, state, models), why something vanished after a rebuild or container start, or how to update the environment (promote a skill, bump a pin, rebuild, roll back, swap volumes). This is a map of the environment, not a task procedure — read it, then act.
 
 ## The ownership rule
-- **The image owns code.** Everything under `/opt` is baked at build time, pinned to an exact version, and reinstalled from the image on every container start. The entrypoint is read-only with respect to user config, with two exceptions: `~/.pi/agent/skills/` is reinstalled from the image on every start, and pi-lean-ctx's default `config.json` is seeded on a fresh volume.
+- **The image owns code.** Everything under `/opt` is baked at build time, pinned to an exact version, and reinstalled from the image on every container start. The entrypoint is read-only with respect to user config, with three exceptions: `~/.pi/agent/skills/` is reinstalled from the image on every start, pi-lean-ctx's default `config.json` is seeded on a fresh volume, and `~/.pi/agent/mcp.json` (the craft MCP servers) is seeded on a fresh volume.
 - **The volume owns state.** `~/.pi` is the named Docker volume `pi-state` (selected at runtime with `PI_VOLUME`): sessions, settings, memory, extension state, hand-dropped files.
 - Corollary: **hand-dropped code is ephemeral by design.** Anything that must persist as code must be baked (repo → commit → rebuild).
 - The startup **provenance echo** (the lines the entrypoint prints) records each installed artifact's source and pin — the live, authoritative view of what is running.
@@ -18,6 +18,7 @@ Use when asked how this environment is constructed, where something lives (skill
 **Image (baked, image-owned):**
 - `/opt/pi` — Pi CLI built from source at a pinned commit (`/opt/pi.sha`)
 - `/opt/pi-extensions` — **staging area** for extensions: `pi-subagents/` + `self-compact/` (git-SHA-pinned forks), `npm/` (upstream packages from the committed lockfile + hoisted `node_modules` + `manifest.json`), `lean-ctx/` (pinned native binary, sha256-verified), `tdd-ledger/` (vendored — this repo is the source of truth)
+- `/opt/photocraft` + `/opt/pdfcraft` — headless ArtCraft CLIs (image editor + PDF workbench), pinned by version + sha256 (`/opt/photocraft.version`, `/opt/pdfcraft.version`); both on `PATH`, with MCP servers registered in `~/.pi/agent/mcp.json` (seeded on fresh volumes, roots `/host`)
 - `/opt/pi-skills` — **staging area** for skills: `mattpocock/` (upstream, curated by `skills-manifest.txt`, SHA-pinned) + `local/` (first-party, from this repo's `skills/`)
 - `/opt/docs` — this repo's `docs/` baked in: ADRs, agent conventions, integration spec
 - `/opt/playwright-browsers` — headless Chromium; `/usr/local/bin/page-shot` — URL→PNG renderer (`page-shot <url> <out.png>`; capture is available to every model, viewing the PNG requires vision)
@@ -50,6 +51,7 @@ Use when asked how this environment is constructed, where something lives (skill
 | pi-subagents / self-compact forks | git SHA (required build args) |
 | Upstream npm extensions | committed `extensions/extension-lock` lockfile |
 | lean-ctx binary | version + sha256 (build args) |
+| PhotoCraft / PdfCraft CLIs | version + sha256 (build args; `*.version` files) |
 | mattpocock skills | git SHA + `skills-manifest.txt` (missing entry fails the build) |
 | First-party skills, tdd-ledger, docs | this repo's commit |
 
