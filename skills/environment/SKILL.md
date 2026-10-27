@@ -1,9 +1,9 @@
 ---
 name: "environment"
 description: "How the pi-sandbox container is constructed and operated: image owns code, volume owns state; baked vs staging area vs drafting area; pinning, rebuild, rollback, skill promotion, `--dev`, volume recovery. Use when asked how the environment is built, where something lives, how to update it, or when a skill/extension seems to have vanished."
-version: 1.0.5
+version: 1.0.6
 created: "2026-10-19"
-updated: "2026-10-23"
+updated: "2026-10-24"
 ---
 ## When to Use
 Use when asked how this environment is constructed, where something lives (skills, extensions, state, models), why something vanished after a rebuild or container start, or how to update the environment (promote a skill, bump a pin, rebuild, roll back, swap volumes). This is a map of the environment, not a task procedure — read it, then act.
@@ -21,7 +21,7 @@ Use when asked how this environment is constructed, where something lives (skill
 - `/opt/photocraft` + `/opt/pdfcraft` — headless ArtCraft CLIs (image editor + PDF workbench), pinned by version + sha256 (`/opt/photocraft.version`, `/opt/pdfcraft.version`); both on `PATH`, with MCP servers registered in `~/.pi/agent/mcp.json` (seeded on fresh volumes, roots `/host`)
 - `/opt/pi-skills` — **staging area** for skills: `mattpocock/` (upstream, curated by `skills-manifest.txt`, SHA-pinned) + `local/` (first-party, from this repo's `skills/`)
 - `/opt/docs` — this repo's `docs/` baked in: ADRs, agent conventions, integration spec
-- `/opt/playwright-browsers` — headless Chromium; `/usr/local/bin/page-shot` — URL→PNG renderer (`page-shot <url> <out.png>`; capture is available to every model, viewing the PNG requires vision)
+- `/opt/playwright-browsers` — headless Chromium; `/usr/local/bin/page-shot` — URL→PNG renderer (`page-shot <url> <out.png>`; capture is available to every model, viewing the PNG requires vision). Default PNGs are RGB without alpha — add `--alpha` for RGBA output with real transparency (icons/assets, e.g. ICO source)
 
 **Volume `pi-state` (`~/.pi`, volume-owned):**
 - `agent/extensions/` — installed extensions (reinstalled from staging on every start)

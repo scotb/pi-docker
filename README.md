@@ -232,9 +232,10 @@ container start, with a provenance line echoed (ADR-0003):
 - **playwright** 1.63 (npm, global; resolvable via `require('playwright')` through `NODE_PATH`) for scripted automation.
 - **page-shot** (`/usr/local/bin/page-shot`) — renders a URL to a PNG for the agent to view with the built-in `read` tool:
   ```sh
-  page-shot http://localhost:3000 /tmp/page.png [--full] [--viewport WxH] [--wait ms] [--selector css]
+  page-shot http://localhost:3000 /tmp/page.png [--full] [--viewport WxH] [--wait ms] [--selector css] [--alpha]
   ```
   Prints a JSON summary: `{ ok, out, url, status, title, consoleErrors, failedRequests }`.
+  Default PNGs are RGB without alpha (colortype 2) — Chromium's capture path renders to an opaque surface, so transparent page areas are baked in. Add `--alpha` to capture with a real alpha channel (RGBA, colortype 6): the page's unpainted regions come out fully transparent, which is what icon/asset capture (e.g. ICO source) needs.
   Screenshots only reach the model when it is vision-capable ("input": ["text", "image"] in `models.json`).
 
 ### Pi

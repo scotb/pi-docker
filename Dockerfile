@@ -145,6 +145,9 @@ ENV NODE_PATH=/usr/lib/node_modules
 # agent can view it with the built-in read tool (the model must be
 # vision-capable: "input": ["text", "image"] in models.json). Workflow:
 #   page-shot http://localhost:3000 /tmp/page.png && read /tmp/page.png
+# Default PNGs are RGB without alpha (Chromium captures to an opaque
+# surface); pass --alpha for RGBA output with real transparency
+# (icons/assets, e.g. ICO source).
 COPY tools/page-shot.cjs /usr/local/bin/page-shot
 RUN chmod +x /usr/local/bin/page-shot
 

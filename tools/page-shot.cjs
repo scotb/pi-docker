@@ -15,11 +15,22 @@
  *   --viewport WxH         Viewport size (default: 1280x900)
  *   --wait <ms>            Extra wait after page load (default: 1000)
  *   --selector <css>       Wait for this CSS selector before screenshot
+ *   --alpha                Capture with an alpha channel (RGBA PNG,
+ *                         colortype 6). The page's default background is
+ *                         omitted, so regions it does not paint are fully
+ *                         transparent. Use for icons/assets where
+ *                         transparency matters (e.g. ICO source).
+ *
+ * Note: without --alpha the PNG is RGB without alpha (colortype 2) —
+ * Chromium's capture path renders to an opaque surface, so transparent
+ * page areas are baked in. Pass --alpha when the destination needs real
+ * transparency.
  *
  * Examples:
  *   page-shot http://localhost:3000 /tmp/page.png
  *   page-shot http://localhost:3000 /tmp/full.png --full
  *   page-shot http://localhost:3000 /tmp/page.png --selector "#app" --wait 2000
+ *   page-shot http://localhost:3000/icon /tmp/icon.png --alpha
  *
  * Output (stdout, single-line JSON):
  *   { ok, out, url, status, title, consoleErrors, failedRequests }
@@ -30,13 +41,14 @@
 const { chromium } = require('playwright');
 
 function parseArgs(argv) {
-  const opts = { full: false, viewport: '1280x900', wait: 1000, selector: null, positionals: [] };
+  const opts = { full: false, viewport: '1280x900', wait: 1000, selector: null, alpha: false, positionals: [] };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--full') opts.full = true;
     else if (a === '--viewport') opts.viewport = argv[++i];
     else if (a === '--wait') opts.wait = Number(argv[++i]);
     else if (a === '--selector') opts.selector = argv[++i];
+    else if (a === '--alpha') opts.alpha = true;
     else if (a.startsWith('--')) throw new Error(`Unknown flag: ${a}`);
     else opts.positionals.push(a);
   }
@@ -47,7 +59,7 @@ function parseArgs(argv) {
   const opts = parseArgs(process.argv.slice(2));
   const [url, out] = opts.positionals;
   if (!url || !out) {
-    console.error('Usage: page-shot <url> <out.png> [--full] [--viewport WxH] [--wait <ms>] [--selector <css>]');
+    console.error('Usage: page-shot <url> <out.png> [--full] [--viewport WxH] [--wait <ms>] [--selector <css>] [--alpha]');
     process.exit(2);
   }
   const [w, h] = opts.viewport.toLowerCase().split('x').map((n) => parseInt(n, 10));
@@ -74,7 +86,10 @@ function parseArgs(argv) {
     if (opts.selector) await page.waitForSelector(opts.selector, { timeout: 15000 });
     if (opts.wait > 0) await page.waitForTimeout(opts.wait);
 
-    await page.screenshot({ path: out, fullPage: opts.full });
+    // omitBackground (only for --alpha): without it Chromium's capture
+    // path renders to an opaque surface, so the PNG comes out colortype 2
+    // (RGB, no alpha) with transparent page areas baked in.
+    await page.screenshot({ path: out, fullPage: opts.full, omitBackground: opts.alpha });
 
     console.log(JSON.stringify({
       ok: true,
