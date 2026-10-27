@@ -372,9 +372,14 @@ RUN if [ -n "${GIT_USER_NAME}" ] && [ -n "${GIT_USER_EMAIL}" ]; then \
 COPY --chown=ubuntu:ubuntu entrypoint.sh /home/ubuntu/entrypoint.sh
 # Context thresholds for the self-compact extension, applied to every Pi process in the
 # container (parent sessions AND pi-subagents children). Precedence: --compact-* CLI flag > env > shipped default.
-# soft 50% / warning 70% / forced 85% (70% + 15% buffer) of the active model's context window.
-ENV SELF_COMPACT_SOFT_AT="50%" \
-    SELF_COMPACT_AT="70%" \
-    SELF_COMPACT_BUFFER="15%"
+# Baked at build time: pass --build-arg SELF_COMPACT_* to override (./build.sh forwards the
+# same-named .env / shell vars). Defaults: soft 50% / warning 70% / forced 85%
+# (warning + 15% buffer) of the active model's context window.
+ARG SELF_COMPACT_SOFT_AT="50%"
+ARG SELF_COMPACT_AT="70%"
+ARG SELF_COMPACT_BUFFER="15%"
+ENV SELF_COMPACT_SOFT_AT="${SELF_COMPACT_SOFT_AT}" \
+    SELF_COMPACT_AT="${SELF_COMPACT_AT}" \
+    SELF_COMPACT_BUFFER="${SELF_COMPACT_BUFFER}"
 
 ENTRYPOINT ["/home/ubuntu/entrypoint.sh"]
