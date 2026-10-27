@@ -131,6 +131,29 @@ verifying a dated build before it becomes `latest`:
 pi --tag 2026-10-15
 ```
 
+### Windows (PowerShell)
+
+`pi.ps1` is the Windows-side twin of `pi.sh`. Same daemon, so the `pi-state`
+volume and `pi-sandbox` image are shared as-is. A project at `C:\foo` mounts
+at `/host/C/foo` — its own identity, its own history, same `/host/<path>`
+scheme as pi.sh.
+
+```powershell
+# one-time: allow running local scripts
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+
+# copy pi.ps1 to a Windows drive and add that folder to PATH, e.g.
+#   C:\Users\<you>\bin\pi.ps1
+cd C:\path\to\your\project
+pi.ps1
+pi.ps1 --tag 2026-10-15
+pi.ps1 -p "fix the bug in src/main.ts"
+```
+
+Not supported from Windows: projects on the WSL side (`/data` is ext4 inside
+the WSL2 VM — not bind-mountable by the Windows docker CLI) and `--dev` (the
+live forks live on that same WSL side). Both are refused loudly.
+
 ### Run commands directly
 
 ```bash
