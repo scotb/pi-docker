@@ -133,7 +133,7 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/opt/playwright-browsers
 # PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1: the npm package's postinstall would
 # otherwise download Chromium a second time to the default cache; the
 # explicit `playwright install` below places it in $PLAYWRIGHT_BROWSERS_PATH.
-RUN PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install -g playwright@1.63.0 \
+RUN PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install -g playwright@1.64.1 \
     && playwright install --with-deps chromium \
     && NODE_PATH="$(npm root -g)" node -e "require('playwright'); console.log('playwright resolvable: OK')"
 # Make the globally installed playwright package resolvable via
@@ -235,8 +235,8 @@ RUN cd /tmp/ext-lock \
 
 # lean-ctx native binary — pinned GitHub release, sha256-verified. The
 # extension and the binary share the same versioning scheme.
-ARG LEAN_CTX_BIN_VERSION=v3.11.4
-ARG LEAN_CTX_BIN_SHA256=5044d0393f7b51bbb861435bd9d98694339678b4f827a690216d870b6719d56a
+ARG LEAN_CTX_BIN_VERSION=v3.12.1
+ARG LEAN_CTX_BIN_SHA256=484856a5b6bc47024ac3eacc9fcaf6fe7d5ec82ec1f16614c5521d73237238f9
 RUN curl -fsSL -o /tmp/lean-ctx.tar.gz \
         "https://github.com/yvgude/lean-ctx/releases/download/${LEAN_CTX_BIN_VERSION}/lean-ctx-x86_64-unknown-linux-gnu.tar.gz" \
     && echo "${LEAN_CTX_BIN_SHA256}  /tmp/lean-ctx.tar.gz" | sha256sum -c - \
