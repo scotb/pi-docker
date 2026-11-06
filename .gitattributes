@@ -1,0 +1,19 @@
+# Line endings — pin correct EOL on checkout regardless of the platform the
+# repo is cloned on. Windows defaults to core.autocrlf=true, which CRLF's
+# shell scripts and breaks them (#!/usr/bin/env bash → /bin/bash\r not found);
+# PowerShell wants the opposite.
+#
+# Order matters: for a given file the LAST matching pattern wins, so the
+# specific patterns below must come after the `*` default.
+
+# Default: treat everything else as text, normalized to LF in the repo and
+# converted per-platform on checkout (keeps markdown/json/docs stable).
+* text=auto
+
+# Shell scripts and plain-text files must always be LF so they run correctly
+# on Linux/WSL no matter where the checkout happens.
+*.sh  text eol=lf
+*.txt text eol=lf
+
+# PowerShell scripts must always be CRLF to run from a Windows host.
+*.ps1 text eol=crlf

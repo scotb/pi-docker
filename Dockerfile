@@ -355,6 +355,13 @@ RUN chown -R ubuntu:ubuntu /opt/pi-extensions/npm /opt/pi-extensions/lean-ctx \
     /opt/photocraft /opt/photocraft.version /opt/pdfcraft /opt/pdfcraft.version \
     /opt/pi-skills /opt/docs
 
+# The state volume mounts at ~/.pi (see pi.sh / pi.ps1). Create the directory
+# in the image, owned by ubuntu, so that on first use Docker initializes the
+# (empty) named volume with ubuntu ownership. Without this, Docker creates the
+# mount point root-owned and the entrypoint (running as ubuntu) cannot mkdir
+# ~/.pi/agent → "Permission denied" on first run.
+RUN mkdir -p /home/ubuntu/.pi && chown -R ubuntu:ubuntu /home/ubuntu/.pi
+
 USER ubuntu
 
 # Apply the git identity as the ubuntu user (writes /home/ubuntu/.gitconfig).
