@@ -408,8 +408,12 @@ RUN if [ -n "${GIT_USER_NAME}" ] && [ -n "${GIT_USER_EMAIL}" ]; then \
     fi
 
 # Copy the startup script outside of ~/.pi/ so it survives the host volume
-# mount (the host mount overwrites ~/.pi/ at runtime).
+# mount (the host mount overwrites ~/.pi/ at runtime). An empty context file
+# would bake silently and fail at container start with a cryptic
+# "exec format error" — refuse the build instead.
 COPY --chown=ubuntu:ubuntu entrypoint.sh /home/ubuntu/entrypoint.sh
+RUN test -s /home/ubuntu/entrypoint.sh || \
+    (echo "ERROR: entrypoint.sh is empty in the build context" >&2; exit 1)
 # Context thresholds for the self-compact extension, applied to every Pi process in the
 # container (parent sessions AND pi-subagents children). Precedence: --compact-* CLI flag > env > shipped default.
 # Baked at build time: pass --build-arg SELF_COMPACT_* to override (./build.sh forwards the
