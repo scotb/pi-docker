@@ -169,6 +169,7 @@ echo "tdd-ledger installed from /opt/pi-extensions/tdd-ledger @ $(cat /opt/pi-ex
 echo "photocraft-cli installed from /opt/photocraft/bin @ $(cat /opt/photocraft.version 2>/dev/null || echo '?') (sha256-pinned release)"
 echo "pdfcraft-cli installed from /opt/pdfcraft/bin @ $(cat /opt/pdfcraft.version 2>/dev/null || echo '?') (sha256-pinned release)"
 echo "docs baked at /opt/docs @ $(cat /opt/docs.sha 2>/dev/null || echo '?') (pi-docker repo)"
+echo "aidlc-rules baked at /opt/aidlc-rules @ $(cat /opt/aidlc-rules.sha 2>/dev/null || echo '?') (awslabs/aidlc-workflows)"
 echo "pi installed at /opt/pi @ $(cat /opt/pi.sha 2>/dev/null || echo '?')"
 
 exec node /opt/pi/packages/coding-agent/dist/cli.js "$@"

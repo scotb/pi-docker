@@ -63,6 +63,7 @@ REPOS=(
     "pi-subagents|https://github.com/scotb/pi-subagents|self-compact|PI_SUBAGENTS_HASH|PI_SUBAGENTS"
     "self-compact|https://github.com/scotb/self-compact-pi-agent|deploy|SELF_COMPACT_HASH|SELF_COMPACT"
     "matt-skills|https://github.com/mattpocock/skills|main|MATT_SKILLS_HASH|MATT_SKILLS"
+    "aidlc-rules|https://github.com/awslabs/aidlc-workflows|tag:v1.0.1|AIDLC_HASH|AIDLC"
 )
 
 args=()
@@ -74,9 +75,25 @@ for row in "${REPOS[@]}"; do
     url="${!url_env:-$url}"
     sha="${!hash_env:-}"
     if [ -z "$sha" ]; then
-        sha="$(git ls-remote "$url" "refs/heads/$branch" | awk 'NR==1{print $1}')"
-        [ -n "$sha" ] || { echo "ERROR: cannot resolve head of $name '$branch' @ $url" >&2; exit 1; }
-        src="head of $branch"
+        case "$branch" in
+            tag:*)
+                ref="refs/tags/${branch#tag:}"
+                sha="$(git ls-remote "$url" "$ref" | awk 'NR==1{print $1}')"
+                [ -n "$sha" ] || { echo "ERROR: cannot resolve $ref @ $url" >&2; exit 1; }
+                # ls-remote returns the tag OBJECT for annotated tags; dereference
+                # to the commit via a shallow no-checkout clone.
+                tmp="$(mktemp -d)"
+                if git clone --quiet --depth 1 --no-checkout -b "${branch#tag:}" "$url" "$tmp" >/dev/null 2>&1; then
+                    sha="$(git -C "$tmp" rev-parse 'HEAD^{commit}')"
+                fi
+                rm -rf "$tmp"
+                ;;
+            *)
+                sha="$(git ls-remote "$url" "refs/heads/$branch" | awk 'NR==1{print $1}')"
+                [ -n "$sha" ] || { echo "ERROR: cannot resolve head of $name '$branch' @ $url" >&2; exit 1; }
+                ;;
+        esac
+        src="$branch"
     else
         src="pinned"
     fi

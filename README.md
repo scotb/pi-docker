@@ -69,7 +69,7 @@ GIT_USER_NAME="Your Name" GIT_USER_EMAIL="you@example.com" ./build.sh
 Date tags make roll-back trivial — run an older tag:
 
 ```bash
-pi --tag 2026-10-08
+pi --tag pi-sandbox:2026-10-08
 ```
 
 Common operations:
@@ -220,6 +220,14 @@ container start, with a provenance line echoed (ADR-0003):
 |---|---|---|
 | `skills/` (this repo) | `/opt/pi-skills/local` | First-party skills — no build arg; bump the version in the SKILL.md front matter, commit, rebuild |
 | `mattpocock/skills` | `/opt/pi-skills/mattpocock` | Third-party, git-SHA-pinned (`MATT_SKILLS_HASH`); curated per `skills-manifest.txt` |
+
+### Baked AI-DLC rules
+
+`/opt/aidlc-rules/` — the AWS AI-DLC v1 workflow rules (awslabs/aidlc-workflows),
+git-SHA-pinned to release tag `v1.0.1` (`AIDLC_HASH`; build.sh dereferences the
+tag to a commit). Pure markdown — no entrypoint install. Consumed by the
+first-party `aidlc-setup` skill, which copies the rules into a repo
+(`.aidlc-rule-details/` + a pointer in `AGENTS.md`).
 
 ## Volume mounts
 

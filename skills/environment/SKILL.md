@@ -1,9 +1,9 @@
 ---
 name: "environment"
 description: "How the pi-sandbox container is constructed and operated: image owns code, volume owns state; baked vs staging area vs drafting area; pinning, rebuild, rollback, skill promotion, `--dev`, volume recovery. Use when asked how the environment is built, where something lives, how to update it, or when a skill/extension seems to have vanished."
-version: 1.0.6
+version: 1.0.7
 created: "2026-10-19"
-updated: "2026-10-24"
+updated: "2026-11-07"
 ---
 ## When to Use
 Use when asked how this environment is constructed, where something lives (skills, extensions, state, models), why something vanished after a rebuild or container start, or how to update the environment (promote a skill, bump a pin, rebuild, roll back, swap volumes). This is a map of the environment, not a task procedure — read it, then act.
@@ -21,6 +21,7 @@ Use when asked how this environment is constructed, where something lives (skill
 - `/opt/photocraft` + `/opt/pdfcraft` — headless ArtCraft CLIs (image editor + PDF workbench), pinned by version + sha256 (`/opt/photocraft.version`, `/opt/pdfcraft.version`); both on `PATH`, with MCP servers registered in `~/.pi/agent/mcp.json` (seeded on fresh volumes, roots `/host`)
 - `/opt/pi-skills` — **staging area** for skills: `mattpocock/` (upstream, curated by `skills-manifest.txt`, SHA-pinned) + `local/` (first-party, from this repo's `skills/`)
 - `/opt/docs` — this repo's `docs/` baked in: ADRs, agent conventions, integration spec
+- `/opt/aidlc-rules` — AWS AI-DLC v1 workflow rules (awslabs/aidlc-workflows, git-SHA pinned via `AIDLC_HASH`, release tag `v1.0.1` dereferenced by build.sh). Consumed by the first-party `aidlc-setup` skill, which copies them into a repo — no entrypoint install, nothing under `~/.pi`
 - `/opt/playwright-browsers` — headless Chromium; `/usr/local/bin/page-shot` — URL→PNG renderer (`page-shot <url> <out.png>`; capture is available to every model, viewing the PNG requires vision). Default PNGs are RGB without alpha — add `--alpha` for RGBA output with real transparency (icons/assets, e.g. ICO source)
 
 **Volume `pi-state` (`~/.pi`, volume-owned):**
@@ -53,6 +54,7 @@ Use when asked how this environment is constructed, where something lives (skill
 | lean-ctx binary | version + sha256 (build args) |
 | PhotoCraft / PdfCraft CLIs | version + sha256 (build args; `*.version` files) |
 | mattpocock skills | git SHA + `skills-manifest.txt` (missing entry fails the build) |
+| AI-DLC rules | git SHA (`AIDLC_HASH`; release tag `v1.0.1`, tag→commit dereferenced by build.sh) |
 | First-party skills, tdd-ledger, docs | this repo's commit |
 
 An upgrade is a deliberate event: bump the pin → `./build.sh --tag pi-sandbox:$(date +%F)` → verify the provenance echo. The Dockerfile refuses to build with empty hashes — always go through `./build.sh`.

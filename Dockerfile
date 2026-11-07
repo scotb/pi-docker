@@ -25,6 +25,10 @@
 #                the build fails if a listed skill is missing at the SHA.
 #                First-party skills live in skills/ (no build arg — they
 #                ship with this repo, like extensions/tdd-ledger).
+#   AIDLC_URL / AIDLC_HASH
+#                awslabs/aidlc-workflows — the AI-DLC v1 rules, pinned to a
+#                release tag (build.sh resolves tag → commit). Extracted to
+#                /opt/aidlc-rules for the first-party aidlc-setup skill.
 #   TDD_LEDGER_SHA
 #                This repo's own commit, recorded for tdd-ledger provenance
 #                (./build.sh passes it automatically).
@@ -337,6 +341,35 @@ RUN git clone --depth 1 "${MATT_SKILLS_URL}" /tmp/matt-skills \
     && git -C /tmp/matt-skills rev-parse HEAD > /opt/pi-skills/mattpocock.sha \
     && rm -rf /tmp/matt-skills /tmp/skills-manifest.txt
 
+# ── AI-DLC workflow rules (awslabs/aidlc-workflows, git-SHA pinned) ─────
+# v1 is pure markdown: aws-aidlc-rules/core-workflow.md (the workflow) +
+# aws-aidlc-rule-details/ (the per-phase rule files). Baked to
+# /opt/aidlc-rules/ for the first-party aidlc-setup skill, which copies them
+# into a repo (.aidlc-rule-details/ + a pointer in AGENTS.md). No
+# entrypoint install — nothing is copied to ~/.pi.
+ARG AIDLC_URL=https://github.com/awslabs/aidlc-workflows
+ARG AIDLC_HASH=
+
+RUN if [ -z "${AIDLC_HASH}" ]; then \
+        echo "ERROR: AIDLC_HASH is required — run ./build.sh" >&2; \
+        exit 1; \
+    fi
+
+RUN git clone --depth 1 "${AIDLC_URL}" /tmp/aidlc \
+    && cd /tmp/aidlc \
+    && if [ "$(git rev-parse HEAD)" != "${AIDLC_HASH}" ]; then \
+           git fetch --depth 1 origin "${AIDLC_HASH}" \
+               || (echo "ERROR: commit ${AIDLC_HASH} not found" >&2; exit 1); \
+           git checkout "${AIDLC_HASH}" \
+               || (echo "ERROR: cannot checkout ${AIDLC_HASH}" >&2; exit 1); \
+       fi \
+    && mkdir -p /opt/aidlc-rules \
+    && cp -a /tmp/aidlc/aidlc-rules/aws-aidlc-rules \
+            /tmp/aidlc/aidlc-rules/aws-aidlc-rule-details \
+            /tmp/aidlc/aidlc-rules/VERSION /opt/aidlc-rules/ \
+    && git -C /tmp/aidlc rev-parse HEAD > /opt/aidlc-rules.sha \
+    && rm -rf /tmp/aidlc
+
 # First-party skills: vendored in this repo (same pattern as tdd-ledger),
 # pinned to this repo's own commit — no build arg needed.
 COPY skills /opt/pi-skills/local
@@ -353,7 +386,7 @@ RUN if [ -n "${TDD_LEDGER_SHA}" ]; then \
 RUN chown -R ubuntu:ubuntu /opt/pi-extensions/npm /opt/pi-extensions/lean-ctx \
     /opt/pi-extensions/tdd-ledger /opt/pi-extensions/lean-ctx.version \
     /opt/photocraft /opt/photocraft.version /opt/pdfcraft /opt/pdfcraft.version \
-    /opt/pi-skills /opt/docs
+    /opt/pi-skills /opt/docs /opt/aidlc-rules /opt/aidlc-rules.sha
 
 # The state volume mounts at ~/.pi (see pi.sh / pi.ps1). Create the directory
 # in the image, owned by ubuntu, so that on first use Docker initializes the

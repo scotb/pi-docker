@@ -47,6 +47,12 @@ _Avoid_: install log
 This repo's `docs/` (ADRs, agent conventions, integration spec) staged into `/opt/docs/` at image build time, pinned to this repo's commit, so the environment's rationale is readable from any session — not just when the pi-docker repo is mounted. The `environment` skill (first-party, in `skills/`) is the discoverable map onto it.
 _Avoid_: repo docs, docs volume
 
+## AI-DLC
+
+**AI-DLC rules**:
+The AWS AI-DLC v1 workflow rules (awslabs/aidlc-workflows) baked into the image at `/opt/aidlc-rules/`, git-SHA-pinned to a release tag (`AIDLC_HASH`). Pure markdown: `core-workflow.md` (the workflow) + `aws-aidlc-rule-details/` (per-phase rules). The first-party `aidlc-setup` skill copies them into a repo (`.aidlc-rule-details/` + an `AGENTS.md` pointer) — the workflow is reached lazily through the pointer, never inlined.
+_Avoid_: AI-DLC install, AI-DLC plugin
+
 ## Craft apps (image + PDF)
 
 **Craft apps**:
