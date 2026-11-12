@@ -3,8 +3,8 @@
   "private": true,
   "description": "Exact-version lockfile workspace for the npm packages baked into the pi-sandbox image. Never edited by hand except to bump a pinned version (a deliberate upgrade event).",
   "dependencies": {
-    "pi-hermes-memory": "0.10.0",
-    "pi-lean-ctx": "3.12.1",
+    "pi-hermes-memory": "0.11.0",
+    "pi-lean-ctx": "3.12.3",
     "pi-web-access": "0.47.0"
   }
 }

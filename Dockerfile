@@ -239,8 +239,8 @@ RUN cd /tmp/ext-lock \
 
 # lean-ctx native binary — pinned GitHub release, sha256-verified. The
 # extension and the binary share the same versioning scheme.
-ARG LEAN_CTX_BIN_VERSION=v3.12.1
-ARG LEAN_CTX_BIN_SHA256=484856a5b6bc47024ac3eacc9fcaf6fe7d5ec82ec1f16614c5521d73237238f9
+ARG LEAN_CTX_BIN_VERSION=v3.12.3
+ARG LEAN_CTX_BIN_SHA256=1adaf10972220d01f13a5ce42925bcebef6b47354ffbaa194995e555924b9e39
 RUN curl -fsSL -o /tmp/lean-ctx.tar.gz \
         "https://github.com/yvgude/lean-ctx/releases/download/${LEAN_CTX_BIN_VERSION}/lean-ctx-x86_64-unknown-linux-gnu.tar.gz" \
     && echo "${LEAN_CTX_BIN_SHA256}  /tmp/lean-ctx.tar.gz" | sha256sum -c - \
@@ -254,8 +254,8 @@ RUN curl -fsSL -o /tmp/lean-ctx.tar.gz \
 # editor (ArtCraft family): stateless CLI pipelines (`run`/`batch`),
 # command discovery (`commands`), and an MCP stdio server (`mcp`). Only the
 # static CLI is baked — the desktop `photocraft` binary needs a display.
-ARG PHOTOCRAFT_VERSION=v0.13.0
-ARG PHOTOCRAFT_SHA256=baf6206b57f553576f41ccb18c6d3b12bd1f3a56933ff6775c51e551f30b9142
+ARG PHOTOCRAFT_VERSION=v0.23.0
+ARG PHOTOCRAFT_SHA256=9858ee234854f7c390f3eab4734aea53100cc912c2c8dceaa029427b75dd22f8
 RUN curl -fsSL -o /tmp/photocraft.tar.gz \
         "https://github.com/storytold/photocraft/releases/download/${PHOTOCRAFT_VERSION}/photocraft-${PHOTOCRAFT_VERSION#v}-linux-x86_64.tar.gz" \
     && echo "${PHOTOCRAFT_SHA256}  /tmp/photocraft.tar.gz" | sha256sum -c - \
@@ -271,8 +271,8 @@ RUN curl -fsSL -o /tmp/photocraft.tar.gz \
 # (ArtCraft family): tool discovery (`tools`), one-shot runs (`run` with
 # key=value args, JSON `--script`, `--root` scoping), and an MCP stdio
 # server (`mcp --root`). Same layout as PhotoCraft; only the CLI is baked.
-ARG PDFCRAFT_VERSION=v0.13.0
-ARG PDFCRAFT_SHA256=598519ea2bc77c66ca9a906241e1fe3eccf745f50627ce3cdbd5b5e675a456d3
+ARG PDFCRAFT_VERSION=v0.21.1
+ARG PDFCRAFT_SHA256=c2919e9044effde318e66807ad2a21bbb74a9555b3c0b99f9ad0c40cf61ce25e
 RUN curl -fsSL -o /tmp/pdfcraft.tar.gz \
         "https://github.com/storytold/pdfcraft/releases/download/${PDFCRAFT_VERSION}/pdfcraft-${PDFCRAFT_VERSION#v}-linux-x86_64.tar.gz" \
     && echo "${PDFCRAFT_SHA256}  /tmp/pdfcraft.tar.gz" | sha256sum -c - \
