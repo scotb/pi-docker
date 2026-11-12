@@ -1,9 +1,9 @@
 ---
 name: "craft-apps"
 description: "Headless image + PDF editing in this environment: PhotoCraft (image cleanup/retouch, Find Edges for coloring-book pages, icon creation, batch pipelines) and PdfCraft (combine/split PDFs, page ops, book assembly). Use when asked to clean up images, make coloring-book pages, create icons or images for web pages, batch-process photos, or assemble/edit PDF books — via photocraft-cli, pdfcraft-cli, or their MCP servers."
-version: 1.0.0
+version: 1.0.1
 created: "2026-10-23"
-updated: "2026-10-23"
+updated: "2026-11-12"
 ---
 ## When to Use
 - **Image work**: cleaning up scanned pages/photos (tone, whiten, sharpen), photo → coloring-book page (Find Edges), creating icons/images for web pages, batch-processing many images.
@@ -12,7 +12,7 @@ updated: "2026-10-23"
 - NOT for: taking screenshots (use `page-shot`), vector art (VectorCraft is not baked in).
 
 ## The discovery rule (do this first)
-Both apps are early alpha (v0.13.0): command ids and parameter names change between versions. **Never trust remembered command ids — discover them:**
+Both apps are early alpha (PhotoCraft v0.23.0, PdfCraft v0.21.1): command ids and parameter names change between versions. **Never trust remembered command ids — discover them:**
 - PhotoCraft: `photocraft-cli commands` (CLI list; use the subcommand's own filter flags) — via MCP: `command_list` with a filter.
 - PdfCraft: `pdfcraft-cli tools` — the full JSON-Schema tool table.
 - `--help` on any subcommand for flags.
@@ -23,11 +23,13 @@ Only then compose the pipeline. A "command not found" usually means the id chang
 photocraft-cli run <input> --cmd <id> [--params '{...}'] ... --out <output>
 photocraft-cli info <input>
 photocraft-cli convert ...      # discover flags: photocraft-cli convert --help
-photocraft-cli batch ...        # discover flags: photocraft-cli batch --help
+photocraft-cli batch --actions <file.json> --in <dir> --out <dir>
 ```
-Verified recipes (v0.13.0):
-- **Scan cleanup**: `photocraft-cli run scan.ppm --cmd image.autoTone --cmd filter.sharpen.smartSharpen --params '{"amount":60}' --out out.png`
-- **Coloring-book page**: `photocraft-cli run photo.png --cmd filter.stylize.findEdges --out page.png`
+Recipes (v0.23.0):
+- **Sharpen (id verified in v0.23.0 README)**: `photocraft-cli run scan.ppm --cmd filter.sharpen.smartSharpen --params '{"amount":60}' --out out.png`
+- **Scan cleanup / coloring-book (NOT re-verified after the 0.13→0.23 jump)** — `image.autoTone` and `filter.stylize.findEdges` are v0.13.0 ids; discover the current ids with `photocraft-cli commands` before running:
+  - `photocraft-cli run scan.ppm --cmd <autoTone-id> --cmd filter.sharpen.smartSharpen --params '{"amount":60}' --out out.png`
+  - `photocraft-cli run photo.png --cmd <findEdges-id> --out page.png`
 
 ## PhotoCraft MCP (stateful documents)
 Tools: `command_list`, `command_run`, `command_batch`, `doc_new`, `doc_open`, `doc_inspect`, `doc_place`, `doc_render_preview`, `doc_export`, `doc_save`, `doc_close`, `jobs_list`, `jobs_cancel`.
@@ -38,11 +40,26 @@ Tools: `command_list`, `command_run`, `command_batch`, `doc_new`, `doc_open`, `d
 ```
 pdfcraft-cli tools                        # JSON-Schema tool table
 pdfcraft-cli info <file.pdf>              # structured facts (pages, fields, size)
+```
+Direct subcommands (v0.21.1) — the simplest path for common ops:
+```
+pdfcraft-cli combine a.pdf b.pdf --out c.pdf
+pdfcraft-cli extract report.pdf --pages 1,3,5-8 --out highlights.pdf
+pdfcraft-cli split report.pdf --every 10 --out-dir parts/
+pdfcraft-cli text paper.pdf --page 3
+pdfcraft-cli edit in.pdf --rotate 1,2:90 --delete 5 --title "Q3" --out out.pdf
+```
+Full tool table (`run` for everything else, e.g. fields, labels, bookmarks):
+```
 pdfcraft-cli run <tool> key=value ...     # one-shot; e.g. run text_find doc=1 query=invoice
 pdfcraft-cli run --script steps.json --root <dir> [--report]
 ```
 - **Book recipe**: open the page PDFs → combine into one document → rotate/delete/move pages → page labels + bookmarks → metadata → protect → save.
 - Render pages to PNG (discover the exact tool name via `tools`) so the agent can visually verify layout with read before declaring the book done.
+- v0.21.1 adds Scan & OCR (built-in engine, optional Tesseract) — discover the tool name via `tools`.
+
+## PdfCraft MCP
+- `pdfcraft-cli mcp` is the registered server (seeded in `mcp.json`). v0.21.1 adds a `--compact` flag that shrinks the tool list to ~10 core tools plus `tool_search`/`tool_call` — if the full tool table is too noisy, add `--compact` to the args in the pi-docker Dockerfile/entrypoint mcp.json seed.
 
 ## Pitfalls
 - Early alpha: discover before running; versions move ids and parameters.
@@ -56,4 +73,4 @@ pdfcraft-cli run --script steps.json --root <dir> [--report]
 ## Verification
 - `photocraft-cli run` on a test image produces the output file (nonzero size).
 - `pdfcraft-cli info <pdf>` returns JSON with page facts.
-- Startup provenance echo lines: `photocraft-cli installed from /opt/photocraft/bin @ v0.13.0 ...` and `pdfcraft-cli installed from /opt/pdfcraft/bin @ v0.13.0 ...`.
+- Startup provenance echo lines: `photocraft-cli installed from /opt/photocraft/bin @ v0.23.0 ...` and `pdfcraft-cli installed from /opt/pdfcraft/bin @ v0.21.1 ...`.
