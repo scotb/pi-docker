@@ -1,9 +1,9 @@
 ---
 name: "environment"
 description: "How the pi-sandbox container is constructed and operated: image owns code, volume owns state; baked vs staging area vs drafting area; pinning, rebuild, rollback, skill promotion, `--dev`, volume recovery. Use when asked how the environment is built, where something lives, how to update it, or when a skill/extension seems to have vanished."
-version: 1.0.7
+version: 1.0.8
 created: "2026-10-19"
-updated: "2026-11-07"
+updated: "2026-11-12"
 ---
 ## When to Use
 Use when asked how this environment is constructed, where something lives (skills, extensions, state, models), why something vanished after a rebuild or container start, or how to update the environment (promote a skill, bump a pin, rebuild, roll back, swap volumes). This is a map of the environment, not a task procedure — read it, then act.
@@ -53,6 +53,7 @@ Use when asked how this environment is constructed, where something lives (skill
 | Upstream npm extensions | committed `extensions/extension-lock` lockfile |
 | lean-ctx binary | version + sha256 (build args) |
 | PhotoCraft / PdfCraft CLIs | version + sha256 (build args; `*.version` files) |
+| Playwright (headless Chromium) | npm version pin in the Dockerfile (`npm install -g playwright@X`); browser build fetched at build time by `playwright install` |
 | mattpocock skills | git SHA + `skills-manifest.txt` (missing entry fails the build) |
 | AI-DLC rules | git SHA (`AIDLC_HASH`; release tag `v1.0.1`, tag→commit dereferenced by build.sh) |
 | First-party skills, tdd-ledger, docs | this repo's commit |

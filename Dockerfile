@@ -137,7 +137,7 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/opt/playwright-browsers
 # PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1: the npm package's postinstall would
 # otherwise download Chromium a second time to the default cache; the
 # explicit `playwright install` below places it in $PLAYWRIGHT_BROWSERS_PATH.
-RUN PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install -g playwright@1.64.1 \
+RUN PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install -g playwright@1.65.0 \
     && playwright install --with-deps chromium \
     && NODE_PATH="$(npm root -g)" node -e "require('playwright'); console.log('playwright resolvable: OK')"
 # Make the globally installed playwright package resolvable via
