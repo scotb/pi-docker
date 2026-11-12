@@ -8,7 +8,7 @@ updated: "2026-11-12"
 ## When to Use
 - **Image work**: cleaning up scanned pages/photos (tone, whiten, sharpen), photo → coloring-book page (Find Edges), creating icons/images for web pages, batch-processing many images.
 - **PDF work**: combining pages into a book, splitting, rotating, page labels/bookmarks, metadata, protecting.
-- The tools: `photocraft-cli` (`/opt/photocraft/bin`, on PATH) and `pdfcraft-cli` (`/opt/pdfcraft/bin`, on PATH), each also registered as an MCP server (`photocraft`, `pdfcraft`) in `~/.pi/agent/mcp.json` — seeded on fresh volumes, rooted at `/host`.
+- The tools: `photocraft-cli` (`/opt/photocraft/bin`, on PATH) and `pdfcraft-cli` (`/opt/pdfcraft/bin`, on PATH), each also registered as an MCP server (`photocraft`, `pdfcraft`) in `~/.pi/agent/mcp.json` — seeded on fresh volumes, rooted at `/host`. In pi 1.5.2 these are exposed as **codemode** servers: their tools are NOT in the top-level tool list — call them from codemode as `tools.mcp__photocraft__<tool>(...)` / `tools.mcp__pdfcraft__<tool>(...)` (responses arrive as MCP envelopes: parse `content[0].text`).
 - NOT for: taking screenshots (use `page-shot`), vector art (VectorCraft is not baked in).
 
 ## The discovery rule (do this first)
@@ -25,11 +25,9 @@ photocraft-cli info <input>
 photocraft-cli convert ...      # discover flags: photocraft-cli convert --help
 photocraft-cli batch --actions <file.json> --in <dir> --out <dir>
 ```
-Recipes (v0.23.0):
-- **Sharpen (id verified in v0.23.0 README)**: `photocraft-cli run scan.ppm --cmd filter.sharpen.smartSharpen --params '{"amount":60}' --out out.png`
-- **Scan cleanup / coloring-book (NOT re-verified after the 0.13→0.23 jump)** — `image.autoTone` and `filter.stylize.findEdges` are v0.13.0 ids; discover the current ids with `photocraft-cli commands` before running:
-  - `photocraft-cli run scan.ppm --cmd <autoTone-id> --cmd filter.sharpen.smartSharpen --params '{"amount":60}' --out out.png`
-  - `photocraft-cli run photo.png --cmd <findEdges-id> --out page.png`
+Verified recipes (v0.23.0, all ids confirmed via `command_list`):
+- **Scan cleanup**: `photocraft-cli run scan.ppm --cmd image.autoTone --cmd filter.sharpen.smartSharpen --params '{"amount":60}' --out out.png`
+- **Coloring-book page**: `photocraft-cli run photo.png --cmd filter.stylize.findEdges --out page.png`
 
 ## PhotoCraft MCP (stateful documents)
 Tools: `command_list`, `command_run`, `command_batch`, `doc_new`, `doc_open`, `doc_inspect`, `doc_place`, `doc_render_preview`, `doc_export`, `doc_save`, `doc_close`, `jobs_list`, `jobs_cancel`.
