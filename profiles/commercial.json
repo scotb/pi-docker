@@ -1,0 +1,22 @@
+{
+  "name": "commercial",
+  "description": "Commercial inference — GitHub Copilot model suite (built-in provider, no custom models.json). Generous credit limits; parallel children allowed, capped for cost. Verify model IDs against `pi /models` on the target machine before applying.",
+  "settings": {
+    "defaultProvider": "github-copilot",
+    "defaultModel": "claude-opus-4-8",
+    "defaultThinkingLevel": "high",
+    "subagents": {
+      "agentOverrides": {
+        "worker": "claude-opus-4-8",
+        "oracle": "claude-opus-4-8",
+        "reviewer": "claude-sonnet-5-5",
+        "scout": "claude-sonnet-5-5",
+        "researcher": "claude-sonnet-5-5",
+        "delegate": "claude-sonnet-5-5"
+      }
+    }
+  },
+  "runtime": {
+    "parallelConcurrency": 3
+  }
+}

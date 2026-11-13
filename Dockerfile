@@ -374,6 +374,11 @@ RUN git clone --depth 1 "${AIDLC_URL}" /tmp/aidlc \
 # pinned to this repo's own commit — no build arg needed.
 COPY skills /opt/pi-skills/local
 
+# Model profiles: config-as-code for the setup-models skill (local.json =
+# llama-swap, commercial.json = GitHub Copilot). Pinned to this repo's own
+# commit like the skills.
+COPY profiles /opt/profiles
+
 # Baked docs: this repo's docs/ (ADRs, agent conventions, integration spec),
 # pinned to this repo's own commit — the rationale is readable from any
 # session, not just when the pi-docker repo is mounted.
@@ -386,7 +391,7 @@ RUN if [ -n "${TDD_LEDGER_SHA}" ]; then \
 RUN chown -R ubuntu:ubuntu /opt/pi-extensions/npm /opt/pi-extensions/lean-ctx \
     /opt/pi-extensions/tdd-ledger /opt/pi-extensions/lean-ctx.version \
     /opt/photocraft /opt/photocraft.version /opt/pdfcraft /opt/pdfcraft.version \
-    /opt/pi-skills /opt/docs /opt/aidlc-rules /opt/aidlc-rules.sha
+    /opt/pi-skills /opt/profiles /opt/docs /opt/aidlc-rules /opt/aidlc-rules.sha
 
 # The state volume mounts at ~/.pi (see pi.sh / pi.ps1). Create the directory
 # in the image, owned by ubuntu, so that on first use Docker initializes the

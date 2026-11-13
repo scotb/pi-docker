@@ -1,9 +1,9 @@
 ---
 name: "environment"
 description: "How the pi-sandbox container is constructed and operated: image owns code, volume owns state; baked vs staging area vs drafting area; pinning, rebuild, rollback, skill promotion, `--dev`, volume recovery. Use when asked how the environment is built, where something lives, how to update it, or when a skill/extension seems to have vanished."
-version: 1.0.8
+version: 1.0.9
 created: "2026-10-19"
-updated: "2026-11-12"
+updated: "2026-11-24"
 ---
 ## When to Use
 Use when asked how this environment is constructed, where something lives (skills, extensions, state, models), why something vanished after a rebuild or container start, or how to update the environment (promote a skill, bump a pin, rebuild, roll back, swap volumes). This is a map of the environment, not a task procedure — read it, then act.
@@ -20,6 +20,7 @@ Use when asked how this environment is constructed, where something lives (skill
 - `/opt/pi-extensions` — **staging area** for extensions: `pi-subagents/` + `self-compact/` (git-SHA-pinned forks), `npm/` (upstream packages from the committed lockfile + hoisted `node_modules` + `manifest.json`), `lean-ctx/` (pinned native binary, sha256-verified), `tdd-ledger/` (vendored — this repo is the source of truth)
 - `/opt/photocraft` + `/opt/pdfcraft` — headless ArtCraft CLIs (image editor + PDF workbench), pinned by version + sha256 (`/opt/photocraft.version`, `/opt/pdfcraft.version`); both on `PATH`, with MCP servers registered in `~/.pi/agent/mcp.json` (seeded on fresh volumes, roots `/host`)
 - `/opt/pi-skills` — **staging area** for skills: `mattpocock/` (upstream, curated by `skills-manifest.txt`, SHA-pinned) + `local/` (first-party, from this repo's `skills/`)
+- `/opt/profiles` — model profiles (`local.json` = llama-swap, `commercial.json` = GitHub Copilot), config-as-code from this repo's `profiles/`, applied by the first-party `setup-models` skill
 - `/opt/docs` — this repo's `docs/` baked in: ADRs, agent conventions, integration spec
 - `/opt/aidlc-rules` — AWS AI-DLC v1 workflow rules (awslabs/aidlc-workflows, git-SHA pinned via `AIDLC_HASH`, release tag `v1.0.1` dereferenced by build.sh). Consumed by the first-party `aidlc-setup` skill, which copies them into a repo — no entrypoint install, nothing under `~/.pi`
 - `/opt/playwright-browsers` — headless Chromium; `/usr/local/bin/page-shot` — URL→PNG renderer (`page-shot <url> <out.png>`; capture is available to every model, viewing the PNG requires vision). Default PNGs are RGB without alpha — add `--alpha` for RGBA output with real transparency (icons/assets, e.g. ICO source)
@@ -29,7 +30,7 @@ Use when asked how this environment is constructed, where something lives (skill
 - `agent/skills/` — installed skills (reinstalled from staging on every start; ephemeral)
 - `agent/pi-hermes-memory/` — **drafting area** (`skills/` is where `skill_manage` writes new global skills) + cross-session memory store
 - `agent/projects-memory/` — per-project memory
-- `agent/models.json` — llama-swap endpoints/models (host-provided config; never baked)
+- `agent/models.json` — custom provider endpoints/models (host-provided config; never baked — the `local` profile in `/opt/profiles` is its source of truth)
 - **Model capabilities (host-provided — change with model swaps):** as of 2026-10 the lead and coder models are vision-capable (can view PNGs/screenshots); the reviewer model is not. Screenshots are first-class proof-of-work for lead/coder.
 - `agent/web-search-cache/`, `tdd-ledger/` state, `~/.pi/lean-ctx` data dir, sessions, settings
 

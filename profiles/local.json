@@ -1,0 +1,70 @@
+{
+  "name": "local",
+  "description": "Local inference — single-GPU llama-swap local inference (host.docker.internal:8007). Five quantized models, one in VRAM at a time.",
+  "settings": {
+    "defaultProvider": "llama-swap",
+    "defaultModel": "lead",
+    "defaultThinkingLevel": "high",
+    "subagents": {
+      "agentOverrides": {
+        "worker": "coder",
+        "oracle": "lead",
+        "reviewer": "reviewer",
+        "scout": "coder",
+        "researcher": "researcher",
+        "delegate": "architect"
+      }
+    }
+  },
+  "models": {
+    "providers": {
+      "llama-swap": {
+        "baseUrl": "http://host.docker.internal:8007/v1",
+        "api": "openai-completions",
+        "apiKey": "none",
+        "models": [
+          {
+            "id": "coder",
+            "name": "Qwen3.8-27B-GSQ-RCO-IQ3_S",
+            "contextWindow": 131072,
+            "maxTokens": 98304,
+            "reasoning": true,
+            "input": ["text", "image"]
+          },
+          {
+            "id": "architect",
+            "name": "Qwen3-14B-Q6_K",
+            "contextWindow": 40960,
+            "maxTokens": 16384,
+            "reasoning": true
+          },
+          {
+            "id": "reviewer",
+            "name": "gemma-4-31B-it-UD-IQ3_XXS",
+            "contextWindow": 110000,
+            "maxTokens": 32768,
+            "reasoning": true
+          },
+          {
+            "id": "lead",
+            "name": "Swift-1.5-Qwen3.8-27B-GSQ-RCO-IQ3_S",
+            "contextWindow": 131072,
+            "maxTokens": 98304,
+            "reasoning": true,
+            "input": ["text", "image"]
+          },
+          {
+            "id": "researcher",
+            "name": "Qwen3.6-35B-A3B-UD-IQ4_XS",
+            "contextWindow": 131072,
+            "maxTokens": 32768,
+            "reasoning": true
+          }
+        ]
+      }
+    }
+  },
+  "runtime": {
+    "parallelConcurrency": 1
+  }
+}

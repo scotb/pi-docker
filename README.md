@@ -273,7 +273,8 @@ first-party `aidlc-setup` skill, which copies the rules into a repo
 - **Pi CLI**: built from source with plain `npm run build` (no Bun) and shipped to `/opt/pi/`; the entrypoint runs it as `node /opt/pi/packages/coding-agent/dist/cli.js`
 - **Agent Tools**: `lean-ctx` (baked at a pinned version)
 - **Baked docs**: this repo's `docs/` at `/opt/docs/` (ADRs, agent conventions, integration spec) — pinned to the repo commit, so the environment's rationale is readable from any session; the `environment` skill is the map onto it
-- **llama-swap**: NOT configured in the image — provided by the host-mounted `~/.pi/agent/models.json`
+- **llama-swap**: NOT configured in the image — provided by the volume's `~/.pi/agent/models.json`
+- **Model profiles**: baked at `/opt/profiles/` (`local.json` = llama-swap, `commercial.json` = GitHub Copilot); applied by the first-party `setup-models` skill
 
 ## Building from a fork
 
@@ -289,10 +290,12 @@ PI_URL=https://github.com/scotb/pi PI_HASH=$(git -C ~/src/pi rev-parse HEAD) ./b
 
 ## Configuration
 
-llama-swap and the default model/provider are configured in
-`~/.pi/agent/models.json`, in the `pi-state` volume. No configuration is
-baked into the image.
+Model configuration lives in two volume files: `~/.pi/agent/models.json`
+(custom providers only) and `~/.pi/agent/settings.json` (default model/
+provider + subagent role→model routing). The per-environment source of truth
+is baked at `/opt/profiles/` (`local.json` = llama-swap, `commercial.json`
+= GitHub Copilot) and applied by the `setup-models` skill.
 
-If your llama-swap instance moves or changes port, update the file in the
-volume (e.g. via a one-off `docker run -v pi-state:/tmp/vol`) — no rebuild is
-required.
+If your llama-swap instance moves or changes port, update `models.json` in
+the volume (e.g. via a one-off `docker run -v pi-state:/tmp/vol`) — no rebuild
+is required.
