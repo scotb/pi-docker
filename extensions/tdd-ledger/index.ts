@@ -99,6 +99,20 @@ function snapshot(cwd: string): Record<string, [string, string]> | null {
   const files: string[] = [];
   walkCs(join(cwd, "src"), "src", files, 0);
   walkCs(join(cwd, "tests"), "tests", files, 0);
+  // Nested layouts (e.g. engine/src, engine/tests): scan one level down so the
+  // anti-cheat hash timeline is populated for repos that keep code under a
+  // subdirectory rather than at the repo root. The two root walks above are
+  // skipped (their rel prefix would collide) by the `d === "src"|"tests"` guard.
+  let dirs: string[] = [];
+  try { dirs = readdirSync(cwd); } catch { dirs = []; }
+  for (const d of dirs.sort()) {
+    if (d === "src" || d === "tests" || d.startsWith(".") || SKIP_DIRS.has(d)) continue;
+    let st;
+    try { st = statSync(join(cwd, d)); } catch { continue; }
+    if (!st.isDirectory()) continue;
+    walkCs(join(cwd, d, "src"), d + "/src", files, 0);
+    walkCs(join(cwd, d, "tests"), d + "/tests", files, 0);
+  }
   const out: Record<string, [string, string]> = {};
   for (const f of files) {
     try {
