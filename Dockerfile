@@ -160,6 +160,17 @@ COPY --from=build /tmp/pi-dist /opt/pi
 ARG FORK_HASH
 RUN if [ -n "${FORK_HASH}" ]; then echo "${FORK_HASH}" > /opt/pi.sha; fi
 
+# Baked `pi` launcher on PATH so in-container tools (e.g. the pi-hermes-memory
+# extension) can spawn Pi by the bare name `pi`. There is no `pi` binary in the
+# image by default — the CLI is only reachable via its full node entry point,
+# which is what entrypoint.sh execs at container start. /usr/local/bin is on
+# PATH (set above), so this makes `pi` resolvable for spawned subprocesses.
+RUN printf '%s\n' \
+        '#!/usr/bin/env bash' \
+        'exec node /opt/pi/packages/coding-agent/dist/cli.js "$@"' \
+        > /usr/local/bin/pi \
+    && chmod +x /usr/local/bin/pi
+
 # Trim the npm cache carried over from the build stage
 RUN rm -rf /opt/pi/node_modules/.cache
 
