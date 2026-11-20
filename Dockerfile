@@ -137,7 +137,7 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/opt/playwright-browsers
 # PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1: the npm package's postinstall would
 # otherwise download Chromium a second time to the default cache; the
 # explicit `playwright install` below places it in $PLAYWRIGHT_BROWSERS_PATH.
-RUN PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install -g playwright@1.65.0 \
+RUN PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install -g playwright@1.65.1 \
     && playwright install --with-deps chromium \
     && NODE_PATH="$(npm root -g)" node -e "require('playwright'); console.log('playwright resolvable: OK')"
 # Make the globally installed playwright package resolvable via
@@ -250,8 +250,8 @@ RUN cd /tmp/ext-lock \
 
 # lean-ctx native binary — pinned GitHub release, sha256-verified. The
 # extension and the binary share the same versioning scheme.
-ARG LEAN_CTX_BIN_VERSION=v3.12.3
-ARG LEAN_CTX_BIN_SHA256=1adaf10972220d01f13a5ce42925bcebef6b47354ffbaa194995e555924b9e39
+ARG LEAN_CTX_BIN_VERSION=v3.12.6
+ARG LEAN_CTX_BIN_SHA256=b205d4d158ac5425dabc50ddf491d11bbfdb1377121596ced8bb275040eb660d
 RUN curl -fsSL -o /tmp/lean-ctx.tar.gz \
         "https://github.com/yvgude/lean-ctx/releases/download/${LEAN_CTX_BIN_VERSION}/lean-ctx-x86_64-unknown-linux-gnu.tar.gz" \
     && echo "${LEAN_CTX_BIN_SHA256}  /tmp/lean-ctx.tar.gz" | sha256sum -c - \
@@ -265,8 +265,8 @@ RUN curl -fsSL -o /tmp/lean-ctx.tar.gz \
 # editor (ArtCraft family): stateless CLI pipelines (`run`/`batch`),
 # command discovery (`commands`), and an MCP stdio server (`mcp`). Only the
 # static CLI is baked — the desktop `photocraft` binary needs a display.
-ARG PHOTOCRAFT_VERSION=v0.23.0
-ARG PHOTOCRAFT_SHA256=9858ee234854f7c390f3eab4734aea53100cc912c2c8dceaa029427b75dd22f8
+ARG PHOTOCRAFT_VERSION=v0.23.1
+ARG PHOTOCRAFT_SHA256=4383aef67a07cc370ad250a6ed60015205d3e6c463faf3ff4b0f67b8178ccfc8
 RUN curl -fsSL -o /tmp/photocraft.tar.gz \
         "https://github.com/storytold/photocraft/releases/download/${PHOTOCRAFT_VERSION}/photocraft-${PHOTOCRAFT_VERSION#v}-linux-x86_64.tar.gz" \
     && echo "${PHOTOCRAFT_SHA256}  /tmp/photocraft.tar.gz" | sha256sum -c - \
